@@ -1,0 +1,17 @@
+{
+  "name": "webgpu-mazes",
+  "module": "index.js",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "dev": "live-server --no-browser"
+  },
+  "type": "module",
+  "dependencies": {
+    "live-server": "^1.2.2"
+  }
+}
