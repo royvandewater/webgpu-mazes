@@ -1,12 +1,11 @@
+import { assert } from "./assert.js";
 import { autoResize } from "./resize.js";
 import { resolveShader } from "./resolveShader.js";
 
 export const render = async () => {
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
-  if (!device) {
-    throw new Error("Failed to get WebGPU device");
-  }
+  assert(device, new Error("Failed to get WebGPU device"));
 
   const canvas = document.querySelector("canvas");
   const context = canvas.getContext("webgpu");
