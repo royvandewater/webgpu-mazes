@@ -50,7 +50,7 @@ const main = async () => {
 
   const module = await device.createShaderModule({
     label: "our hardcoded red triangle shaders",
-    code: await resolveShader("/src/shaders/redTriangle.wgsl"),
+    code: await resolveShader("src/shaders/redTriangle.wgsl"),
   });
 
   const pipeline = await device.createRenderPipeline({
