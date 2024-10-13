@@ -14,7 +14,7 @@ const resizeCanvas = (canvas, device) => {
 };
 
 export const autoResize = (canvas, device) => {
-  const observer = new ResizeObserver((entries) => {
+  const observer = new ResizeObserver(() => {
     resizeCanvas(canvas, device);
   });
   observer.observe(canvas);
