@@ -48,33 +48,50 @@ export const render = async () => {
     ],
   };
 
-  const uniformBufferSize =
+  const staticUniformBufferSize =
     4 * 4 + // color is 4 32bit floats (4 bytes each)
     2 * 4 + // scale is 2 32bit floats (4 bytes each)
-    2 * 4; // offset is 2 32bit floats (4 bytes each)
+    2 * 4; // padding
+
+  const uniformBufferSize = 2 * 4; // offset is 2 32bit floats (4 bytes each)
 
   const kColorOffset = 0;
-  const kScaleOffset = 4;
-  const kOffsetOffset = 6;
+  const kOffsetOffset = 4;
+
+  const kScaleOffset = 0;
 
   const kNumObjects = 100;
   const objectInfos = [];
 
   for (let i = 0; i < kNumObjects; i++) {
+    const staticUniformBuffer = device.createBuffer({
+      label: `static uniform buffer for object ${i}`,
+      size: staticUniformBufferSize,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
+    {
+      const uniformValues = new Float32Array(staticUniformBufferSize / 4);
+      uniformValues.set([rand(), rand(), rand(), 1], kColorOffset);
+      uniformValues.set([rand(-0.9, 0.9), rand(-0.9, 0.9)], kOffsetOffset);
+
+      device.queue.writeBuffer(staticUniformBuffer, 0, uniformValues);
+    }
+
+    const uniformValues = new Float32Array(uniformBufferSize / 4);
     const uniformBuffer = device.createBuffer({
-      label: `uniform buffer for object ${i}`,
+      label: `changing uniform buffer for object ${i}`,
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    const uniformValues = new Float32Array(uniformBufferSize / 4);
-    uniformValues.set([rand(), rand(), rand(), 1], kColorOffset);
-    uniformValues.set([rand(-0.9, 0.9), rand(-0.9, 0.9)], kOffsetOffset);
-
     const bindGroup = device.createBindGroup({
       label: `bind group for object ${i}`,
       layout: pipeline.getBindGroupLayout(0),
-      entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+      entries: [
+        { binding: 0, resource: { buffer: staticUniformBuffer } },
+        { binding: 1, resource: { buffer: uniformBuffer } },
+      ],
     });
 
     objectInfos.push({
