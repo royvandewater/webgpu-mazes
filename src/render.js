@@ -18,12 +18,12 @@ export const render = async () => {
   autoResize(canvas, device);
 
   const module = await device.createShaderModule({
-    label: "our hardcoded rgb triangle shaders",
-    code: await resolveShader("src/shaders/rgbTriangle.wgsl"),
+    label: "our hardcoded checker triangle shaders",
+    code: await resolveShader("src/shaders/checkerTriangle.wgsl"),
   });
 
   const pipeline = await device.createRenderPipeline({
-    label: "our hardcoded rgb triangle pipeline",
+    label: "our hardcoded checker triangle pipeline",
     layout: "auto",
     vertex: {
       entryPoint: "vs",
