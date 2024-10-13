@@ -13,6 +13,12 @@ export const generateMaze = (width, height) => {
     .map((x) => times(height).map((y) => [x, y]))
     .flat()
     .forEach(([x, y]) => {
+      if (x === width && y === height) {
+        quads.push(right(x, y));
+        quads.push(top(x, y));
+        return;
+      }
+
       if (x === width) {
         quads.push(right(x, y));
         return;
