@@ -10,6 +10,7 @@ export const render = async () => {
   const canvas = document.querySelector("canvas");
   const context = canvas.getContext("webgpu");
   const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+
   context.configure({
     device,
     format: presentationFormat,
@@ -18,19 +19,19 @@ export const render = async () => {
   autoResize(canvas, device);
 
   const module = await device.createShaderModule({
-    label: "our triangle with storages",
-    code: await resolveShader("src/shaders/triangleWithStorages.wgsl"),
+    label: "maze module",
+    code: await resolveShader("src/shaders/maze.wgsl"),
   });
 
   const pipeline = await device.createRenderPipeline({
-    label: "our triangle with storages pipeline",
+    label: "maze pipeline",
     layout: "auto",
     vertex: {
-      entryPoint: "vs",
+      entryPoint: "vertexShader",
       module,
     },
     fragment: {
-      entryPoint: "fs",
+      entryPoint: "fragmentShader",
       module,
       targets: [{ format: presentationFormat }],
     },
@@ -40,80 +41,75 @@ export const render = async () => {
     label: "our basic canvas render pass",
     colorAttachments: [
       {
-        // view: <- to be filled out when we render
-        clearValue: [0.3, 0.3, 0.3, 1.0],
+        clearValue: [1.0, 1.0, 1.0, 1.0],
         loadOp: "clear",
         storeOp: "store",
       },
     ],
   };
 
-  const kNumObjects = 100;
-  const objectInfos = [];
+  // we're drawing a 3x3 grid of squares. Each square has a top edge and a right edge.
+  // The squares on the bottom row have a bottom edge, and the squares on the left row
+  // have a left edge. Each edge is drawn as a line, and is therefore represented by 2
+  // vertices. Therefore, we have 3 lines per row and 4 lines (3 top lines, 1 bottom line)
+  // Similarly, we have 3 lines per column and 4 lines (3 left lines, 1 right line).
+  // Therefore, we have (3 * 4) + (3 * 4) = 24 lines.
+  // Not all lines will be filled in though
 
-  const staticUnitSize =
-    4 * 4 + // color is 4 32bit floats (4 bytes each)
-    2 * 4 + // scale is 2 32bit floats (4 bytes each)
-    2 * 4; // padding
-  const changingUnitSize = 2 * 4; // offset is 2 32bit floats (4 bytes each)
-  const staticStorageBufferSize = staticUnitSize * kNumObjects;
-  const changingStorageBufferSize = changingUnitSize * kNumObjects;
+  // lets start with a hardcoded grid that looks like this:
+  // ┌───┬───┬───┐
+  // │           │  0,2 1,2 2,2
+  // ├───┼   ┼   ┤
+  // │       │   │  0,1 1,1 2,1
+  // ├   ┼───┼   ┤
+  // │   │       │  0,0 1,0 2,0
+  // └───┴───┴───┘
 
-  const staticStorageBuffer = device.createBuffer({
-    label: "static storage buffer",
-    size: staticStorageBufferSize,
+  const quads = [
+    // first row
+    top(0, 2),
+    top(1, 2),
+    top(2, 2),
+    left(0, 2),
+    right(2, 2),
+    // second row
+    top(0, 1),
+    left(0, 1),
+    right(1, 1),
+    right(2, 1),
+    // third row
+    top(1, 0),
+    left(0, 0),
+    right(0, 0),
+    right(2, 0),
+    bottom(0, 0),
+    bottom(1, 0),
+    bottom(2, 0),
+  ];
+
+  const xMin = -0.5;
+  const xMax = 2.5;
+  const yMin = -0.5;
+  const yMax = 2.5;
+
+  const kNumObjects = quads.length;
+
+  const unitSize = 6 * 4 * 4; // each quad is 6 vertices of 4 32bit floats (4 bytes each)
+  const storageBufferSize = unitSize * kNumObjects;
+  const numVertices = 6 * kNumObjects;
+
+  const storageBuffer = device.createBuffer({
+    label: "storage buffer",
+    size: storageBufferSize,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   });
 
-  const changingStorageBuffer = device.createBuffer({
-    label: "changing storage buffer",
-    size: changingStorageBufferSize,
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-  });
+  const storageValues = new Float32Array(storageBufferSize / 4);
 
-  const kColorOffset = 0;
-  const kOffsetOffset = 4;
-
-  const kScaleOffset = 0;
-
-  {
-    const staticStorageValues = new Float32Array(staticStorageBufferSize / 4);
-    for (let i = 0; i < kNumObjects; i++) {
-      const staticOffset = i * (staticUnitSize / 4);
-
-      const colorOffset = staticOffset + kColorOffset;
-      const offsetOffset = staticOffset + kOffsetOffset;
-
-      staticStorageValues.set([rand(), rand(), rand(), 1], colorOffset);
-      staticStorageValues.set([rand(-0.9, 0.9), rand(-0.9, 0.9)], offsetOffset);
-
-      objectInfos.push({
-        scale: rand(0.2, 0.5),
-      });
-    }
-    device.queue.writeBuffer(staticStorageBuffer, 0, staticStorageValues);
-  }
-
-  const { vertexData, numVertices } = createCircleVertices({
-    radius: 0.5,
-    innerRadius: 0.2,
-  });
-  const vertexStorageBuffer = device.createBuffer({
-    label: "vertex storage buffer",
-    size: vertexData.byteLength,
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-  });
-  device.queue.writeBuffer(vertexStorageBuffer, 0, vertexData);
-
-  const storageValues = new Float32Array(changingStorageBufferSize / 4);
   const bindGroup = device.createBindGroup({
-    label: "our objects bind group",
+    label: "objects bind group",
     layout: pipeline.getBindGroupLayout(0),
-    entries: [
-      { binding: 0, resource: { buffer: staticStorageBuffer } },
-      { binding: 1, resource: { buffer: changingStorageBuffer } },
-      { binding: 2, resource: { buffer: vertexStorageBuffer } },
-    ],
+    entries: [{ binding: 0, resource: { buffer: storageBuffer } }],
   });
 
   const renderLoop = () => {
@@ -130,17 +126,31 @@ export const render = async () => {
     const pass = encoder.beginRenderPass(renderPassDescriptor);
     pass.setPipeline(pipeline);
 
-    const aspect = canvas.width / canvas.height;
+    quads.forEach((quad, ndx) => {
+      const offset = ndx * (unitSize / 4);
+      const [[x1, y1], [x2, y2], [x3, y3], [x4, y4], [x5, y5], [x6, y6]] = quad;
+      const values = [
+        scaleCoordinate(x1, xMin, xMax),
+        scaleCoordinate(y1, yMin, yMax),
+        scaleCoordinate(x2, xMin, xMax),
+        scaleCoordinate(y2, yMin, yMax),
+        scaleCoordinate(x3, xMin, xMax),
+        scaleCoordinate(y3, yMin, yMax),
+        scaleCoordinate(x4, xMin, xMax),
+        scaleCoordinate(y4, yMin, yMax),
+        scaleCoordinate(x5, xMin, xMax),
+        scaleCoordinate(y5, yMin, yMax),
+        scaleCoordinate(x6, xMin, xMax),
+        scaleCoordinate(y6, yMin, yMax),
+      ];
 
-    objectInfos.forEach(({ scale }, ndx) => {
-      const offset = ndx * (changingUnitSize / 4);
-      storageValues.set([scale / aspect, scale], offset + kScaleOffset);
+      storageValues.set(values, offset);
     });
 
-    device.queue.writeBuffer(changingStorageBuffer, 0, storageValues);
+    device.queue.writeBuffer(storageBuffer, 0, storageValues);
 
     pass.setBindGroup(0, bindGroup);
-    pass.draw(numVertices, kNumObjects);
+    pass.draw(2 * numVertices);
     pass.end();
 
     const commandBuffer = encoder.finish();
@@ -151,52 +161,75 @@ export const render = async () => {
   renderLoop();
 };
 
-// A random number between [min and max)
-// With 1 argument it will be [0 to min)
-// With no arguments it will be [0 to 1)
-const rand = (min = 0, max = 1) => {
-  return Math.random() * (max - min) + min;
+// moves the coordinate to a -1 to 1 range
+const scaleCoordinate = (v, min, max) => {
+  return ((v - min) / (max - min)) * 2 - 1;
 };
 
-const createCircleVertices = ({
-  radius = 1,
-  numSubdivisions = 24,
-  innerRadius = 0,
-  startAngle = 0,
-  endAngle = Math.PI * 2,
-} = {}) => {
-  // 2 triangles per subdivision, 3 vertices per triangle, 2 values (xy) each
-  const numVertices = numSubdivisions * 3 * 2;
-  const vertexData = new Float32Array(numVertices * 2 * 3 * 2);
+const thickness = 0.1;
+const halfThickness = thickness / 2;
 
-  let offset = 0;
-  const addVertex = (x, y) => {
-    vertexData[offset++] = x;
-    vertexData[offset++] = y;
-  };
+const top = (x, y) => {
+  // x, y is the center of the square.
+  // the top edge is 0.5 units above the center
+  // the quad should be vertically centered about the top edge
+  // and have a thickness of 0.01 units
 
-  for (let i = 0; i < numSubdivisions; ++i) {
-    const angle1 =
-      startAngle + ((i + 0) * (endAngle - startAngle)) / numSubdivisions;
-    const angle2 =
-      startAngle + ((i + 1) * (endAngle - startAngle)) / numSubdivisions;
+  const topEdge = y + 0.5;
+  const leftEdge = x - 0.5;
+  const rightEdge = x + 0.5;
 
-    const c1 = Math.cos(angle1);
-    const s1 = Math.sin(angle1);
-    const c2 = Math.cos(angle2);
-    const s2 = Math.sin(angle2);
+  return [
+    [leftEdge - halfThickness, topEdge - halfThickness],
+    [rightEdge + halfThickness, topEdge - halfThickness],
+    [leftEdge - halfThickness, topEdge + halfThickness],
+    [rightEdge + halfThickness, topEdge - halfThickness],
+    [leftEdge - halfThickness, topEdge + halfThickness],
+    [rightEdge + halfThickness, topEdge + halfThickness],
+  ];
+};
 
-    addVertex(c1 * radius, s1 * radius);
-    addVertex(c2 * radius, s2 * radius);
-    addVertex(c1 * innerRadius, s1 * innerRadius);
+const left = (x, y) => {
+  const leftEdge = x - 0.5;
+  const topEdge = y + 0.5;
+  const bottomEdge = y - 0.5;
 
-    addVertex(c1 * innerRadius, s1 * innerRadius);
-    addVertex(c2 * radius, s2 * radius);
-    addVertex(c2 * innerRadius, s2 * innerRadius);
-  }
+  return [
+    [leftEdge - halfThickness, topEdge + halfThickness],
+    [leftEdge - halfThickness, bottomEdge - halfThickness],
+    [leftEdge + halfThickness, topEdge + halfThickness],
+    [leftEdge - halfThickness, bottomEdge - halfThickness],
+    [leftEdge + halfThickness, topEdge + halfThickness],
+    [leftEdge + halfThickness, bottomEdge - halfThickness],
+  ];
+};
 
-  return {
-    vertexData,
-    numVertices,
-  };
+const right = (x, y) => {
+  const rightEdge = x + 0.5;
+  const topEdge = y + 0.5;
+  const bottomEdge = y - 0.5;
+
+  return [
+    [rightEdge - halfThickness, topEdge + halfThickness],
+    [rightEdge - halfThickness, bottomEdge - halfThickness],
+    [rightEdge + halfThickness, topEdge + halfThickness],
+    [rightEdge - halfThickness, bottomEdge - halfThickness],
+    [rightEdge + halfThickness, topEdge + halfThickness],
+    [rightEdge + halfThickness, bottomEdge - halfThickness],
+  ];
+};
+
+const bottom = (x, y) => {
+  const bottomEdge = y - 0.5;
+  const leftEdge = x - 0.5;
+  const rightEdge = x + 0.5;
+
+  return [
+    [leftEdge - halfThickness, bottomEdge - halfThickness],
+    [rightEdge + halfThickness, bottomEdge - halfThickness],
+    [leftEdge - halfThickness, bottomEdge + halfThickness],
+    [rightEdge + halfThickness, bottomEdge - halfThickness],
+    [leftEdge - halfThickness, bottomEdge + halfThickness],
+    [rightEdge + halfThickness, bottomEdge + halfThickness],
+  ];
 };
