@@ -1,9 +1,10 @@
 import { assert } from "./assert.js";
 import { autoResize } from "./resize.js";
 import { resolveShader } from "./resolveShader.js";
-import { generateMaze as bintreeMaze } from "./maze.js";
 
-export const render = async () => {
+export const render = async (maze) => {
+  const { quads } = maze;
+
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
   assert(device, new Error("Failed to get WebGPU device"));
@@ -49,8 +50,6 @@ export const render = async () => {
     ],
   };
 
-  // const quads = hardcodedMaze();
-  const quads = bintreeMaze(20, 20);
   const vertices = quads.flat();
 
   const xs = vertices.map(([x, _y]) => x);

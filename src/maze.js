@@ -1,13 +1,5 @@
-export const generateMaze = (width, height) => {
+export const generateBinTreeMaze = (width, height) => {
   const quads = [];
-
-  times(height).forEach((y) => {
-    quads.push(left(0, y));
-  });
-
-  times(width).forEach((x) => {
-    quads.push(bottom(x, 0));
-  });
 
   times(width)
     .map((x) => times(height).map((y) => [x, y]))
@@ -17,6 +9,12 @@ export const generateMaze = (width, height) => {
         quads.push(right(x, y));
         quads.push(top(x, y));
         return;
+      }
+      if (x == 0) {
+        quads.push(left(x, y));
+      }
+      if (y === 0) {
+        quads.push(bottom(x, y));
       }
 
       if (x === width) {
@@ -36,10 +34,10 @@ export const generateMaze = (width, height) => {
       }
     });
 
-  return quads;
+  return { quads };
 };
 
-export const hardcodedMaze = () => {
+export const generateHardcodedMaze = async () => {
   // we're drawing a 3x3 grid of squares. Each square has a top edge and a right edge.
   // The squares on the bottom row have a bottom edge, and the squares on the left row
   // have a left edge. Each edge is drawn as a line, and is therefore represented by 2
@@ -58,26 +56,45 @@ export const hardcodedMaze = () => {
   // └───┴───┴───┘
 
   const quads = [
-    // first row
+    // top left
     top(0, 2),
-    top(1, 2),
-    top(2, 2),
+    bottom(0, 2),
     left(0, 2),
+
+    // top center
+    top(1, 2),
+
+    // top right
+    top(2, 2),
     right(2, 2),
-    // second row
+
+    // center left
     top(0, 1),
     left(0, 1),
+
+    // center center
+    bottom(1, 1),
     right(1, 1),
+
+    // center right
+    left(2, 1),
     right(2, 1),
-    // third row
-    top(1, 0),
+
+    // bottom left
+    bottom(0, 0),
     left(0, 0),
     right(0, 0),
-    right(2, 0),
-    bottom(0, 0),
+
+    // bottom center
     bottom(1, 0),
+    left(1, 0),
+    top(1, 0),
+
+    // bottom right
     bottom(2, 0),
+    right(2, 0),
   ];
+  return { quads };
 };
 
 const thickness = 0.1;
