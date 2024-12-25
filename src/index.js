@@ -3,16 +3,33 @@ import {
   generateBinTreeMaze as generateBinTreeMazeGPU,
   generateHardcodedMaze as generateHardcodedMazeGPU,
 } from "./gpuMaze.js";
-import { generateBinTreeMaze, generateHardcodedMaze } from "./maze.js";
+import {
+  generateBinTreeMaze as generateBinTreeMazeCPU,
+  generateHardcodedMaze as generateHardcodedMazeCPU,
+} from "./maze.js";
 import { round } from "remeda";
 
+const maxSize = 65535;
+
 const main = async () => {
-  const mazeCPU = await generateHardcodedMaze();
-  const mazeGPU = await generateHardcodedMazeGPU();
+  // const mazeCPU = await generateHardcodedMaze();
+  // const mazeGPU = await generateHardcodedMazeGPU();
+
+  const params = new URLSearchParams(window.location.search);
+  const height = Number(params.get("height")) || 10;
+  const width = Number(params.get("width")) || 10;
+  const seed = Number(params.get("seed")) || Math.random() * maxSize;
+  const size = height * width;
+  if (size > maxSize) {
+    throw new Error(
+      `Size (${size}) too large, max size is ${maxSize} (height * width)`
+    );
+  }
+  const maze = await generateBinTreeMazeGPU(height, width, seed);
+  // const maze = await generateBinTreeMazeCPU(height, width);
   // debugMazes({ mazeGPU, mazeCPU });
 
-  // const maze = await generateBinTreeMaze(20, 20);
-  await render(mazeGPU);
+  await render(maze);
   // await render(mazeCPU);
   // await compute();
 };

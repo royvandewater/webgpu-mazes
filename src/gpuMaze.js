@@ -2,10 +2,11 @@ import { chunk } from "remeda";
 import { assert } from "./assert.js";
 import { resolveShader } from "./resolveShader.js";
 
-export const generateBinTreeMaze = async (width, height) => {
+export const generateBinTreeMaze = async (width, height, seed) => {
   const shaderPath = "src/shaders/generateBinTreeMaze.wgsl";
+  const size = width * height;
 
-  const { quads } = await compute(shaderPath, width * height, 1);
+  const { quads } = await compute(shaderPath, size, seed, width, height);
 
   return { quads };
 };
@@ -18,7 +19,7 @@ export const generateHardcodedMaze = async () => {
   return { quads };
 };
 
-export const compute = async (shaderPath, size, seed) => {
+export const compute = async (shaderPath, size, seed, width, height) => {
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
   assert(device, new Error("Failed to get WebGPU device"));
@@ -50,7 +51,20 @@ export const compute = async (shaderPath, size, seed) => {
       GPUBufferUsage.COPY_DST,
   });
 
+  const dimensionsBuffer = device.createBuffer({
+    label: "dimensions buffer",
+    size: 2 * 4, // 2 32-bit integers
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const dimensionValues = new Uint32Array(2);
+  dimensionValues[0] = width;
+  dimensionValues[1] = height;
+
   device.queue.writeBuffer(workBuffer, 0, input);
+
+  // write the dimensions to the buffer
+  device.queue.writeBuffer(dimensionsBuffer, 0, dimensionValues);
 
   const resultBuffer = device.createBuffer({
     label: "result buffer",
@@ -62,7 +76,10 @@ export const compute = async (shaderPath, size, seed) => {
     label: "bind group for work buffer",
     layout: pipeline.getBindGroupLayout(0),
     // binding 0 corresponds to the @group(0) @binding(0) in the compute shader
-    entries: [{ binding: 0, resource: { buffer: workBuffer } }],
+    entries: [
+      { binding: 0, resource: { buffer: workBuffer } },
+      { binding: 1, resource: { buffer: dimensionsBuffer } },
+    ],
   });
 
   const encoder = device.createCommandEncoder({ label: "maze encoder" });

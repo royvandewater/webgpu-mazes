@@ -1,3 +1,6 @@
+// @include "./mazeWalls.wgsl"
+// @include "./flattenQuads.wgsl"
+
 @group(0) @binding(0) var<storage, read_write> data: array<f32>;
 
 @compute @workgroup_size(1) fn generate(
@@ -138,96 +141,4 @@ fn if8() -> array<f32, 48> {
     empty(),
     empty(),
   ));
-}
-
-fn flattenQuads(quads: array<array<vec2f, 6>, 4>) -> array<f32, 48> {
-  var flattened: array<f32, 48> = array<f32, 48>();
-
-  for (var i: i32 = 0; i < 4; i++) {
-    for (var j: i32 = 0; j < 6; j += 1) {
-      flattened[(i * 12) + (j * 2)] = quads[i][j].x;
-      flattened[(i * 12) + (j * 2) + 1] = quads[i][j].y;
-    }
-  }
-  return flattened;
-}
-
-const thickness = 0.1;
-const halfThickness = thickness / 2.0;
-
-fn top(x: f32, y: f32) -> array<vec2f, 6> {
-  // x, y is the center of the square.
-  // the top edge is 0.5 units above the center
-  // the quad should be vertically centered about the top edge
-  // and have a thickness of 0.01 units
-
-  let topEdge = y + 0.5;
-  let leftEdge = x - 0.5;
-  let rightEdge = x + 0.5;
-
-  return array<vec2f, 6>(
-    vec2f(leftEdge - halfThickness, topEdge - halfThickness),
-    vec2f(rightEdge + halfThickness, topEdge - halfThickness),
-    vec2f(leftEdge - halfThickness, topEdge + halfThickness),
-    vec2f(rightEdge + halfThickness, topEdge - halfThickness),
-    vec2f(leftEdge - halfThickness, topEdge + halfThickness),
-    vec2f(rightEdge + halfThickness, topEdge + halfThickness),
-  );
-};
-
-fn bottom(x: f32, y: f32) -> array<vec2f, 6> {
-  let bottomEdge = y - 0.5;
-  let leftEdge = x - 0.5;
-  let rightEdge = x + 0.5;
-
-  return array<vec2f, 6>(
-    vec2f(leftEdge - halfThickness, bottomEdge - halfThickness),
-    vec2f(rightEdge + halfThickness, bottomEdge - halfThickness),
-    vec2f(leftEdge - halfThickness, bottomEdge + halfThickness),
-    vec2f(rightEdge + halfThickness, bottomEdge - halfThickness),
-    vec2f(leftEdge - halfThickness, bottomEdge + halfThickness),
-    vec2f(rightEdge + halfThickness, bottomEdge + halfThickness),
-  );
-};
-
-
-fn left(x: f32, y: f32) -> array<vec2f, 6> {
-  let leftEdge = x - 0.5;
-  let topEdge = y + 0.5;
-  let bottomEdge = y - 0.5;
-
-  return array<vec2f, 6>(
-    vec2f(leftEdge - halfThickness, topEdge + halfThickness),
-    vec2f(leftEdge - halfThickness, bottomEdge - halfThickness),
-    vec2f(leftEdge + halfThickness, topEdge + halfThickness),
-    vec2f(leftEdge - halfThickness, bottomEdge - halfThickness),
-    vec2f(leftEdge + halfThickness, topEdge + halfThickness),
-    vec2f(leftEdge + halfThickness, bottomEdge - halfThickness),
-  );
-};
-
-fn right(x: f32, y: f32) -> array<vec2f, 6> {
-  let rightEdge = x + 0.5;
-  let topEdge = y + 0.5;
-  let bottomEdge = y - 0.5;
-
-  return array<vec2f, 6>(
-    vec2f(rightEdge - halfThickness, topEdge + halfThickness),
-    vec2f(rightEdge - halfThickness, bottomEdge - halfThickness),
-    vec2f(rightEdge + halfThickness, topEdge + halfThickness),
-    vec2f(rightEdge - halfThickness, bottomEdge - halfThickness),
-    vec2f(rightEdge + halfThickness, topEdge + halfThickness),
-    vec2f(rightEdge + halfThickness, bottomEdge - halfThickness),
-  );
-};
-
-fn empty() -> array<vec2f, 6> {
-  return array<vec2f, 6>(
-    vec2f(-2.0, -2.0),
-    vec2f(-2.0, -2.0),
-    vec2f(-2.0, -2.0),
-    vec2f(-2.0, -2.0),
-    vec2f(-2.0, -2.0),
-    vec2f(-2.0, -2.0),
-  );
 }
