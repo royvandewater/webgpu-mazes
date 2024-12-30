@@ -97,18 +97,15 @@ const generateBorderBuffer = (device, width, height) => {
 
 const borderTriangleStrip = (width, height) => {
   return [
-    [-0.55, -0.45],
     [-0.55, -0.55], // bottom left
-    [width - 0.45, -0.45],
+    [-0.45, -0.45], // bottom left inner
     [width - 0.45, -0.55], // bottom right
-    [width - 0.55, -0.55], // back track a little
+    [width - 0.55, -0.45], // bottom right inner
     [width - 0.45, height - 0.45], // top right
-    [width - 0.55, height - 0.45],
-    [width - 0.55, height - 0.55], // back track a little
+    [width - 0.55, height - 0.55], // top right inner
     [-0.55, height - 0.45], // top left
-    [-0.55, height - 0.55],
-    [-0.45, height - 0.55], // back track a little
+    [-0.45, height - 0.55], // top left inner
     [-0.55, -0.55], // bottom left
-    [-0.45, -0.55],
+    [-0.45, -0.45], // bottom left inner
   ];
 };

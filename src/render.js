@@ -100,9 +100,9 @@ export const render = async (device, maze) => {
     label: "border render pass",
     colorAttachments: [
       {
-        // clearValue: [1.0, 1.0, 1.0, 1.0],
-        // loadOp: "clear",
-        loadOp: "load",
+        clearValue: [1.0, 1.0, 1.0, 1.0],
+        loadOp: "clear",
+        // loadOp: "load",
         storeOp: "store",
       },
     ],
@@ -126,7 +126,7 @@ export const render = async (device, maze) => {
     const borderPass = encoder.beginRenderPass(borderRenderPassDescriptor);
     borderPass.setPipeline(borderPipeline);
     borderPass.setBindGroup(0, borderBindGroup);
-    borderPass.draw(13); // should be 9 if we didn't back track
+    borderPass.draw(10);
     borderPass.end();
 
     device.queue.submit([encoder.finish()]);
