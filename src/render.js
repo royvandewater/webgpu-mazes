@@ -100,9 +100,9 @@ export const render = async (device, maze) => {
     label: "border render pass",
     colorAttachments: [
       {
-        clearValue: [1.0, 1.0, 1.0, 1.0],
-        loadOp: "clear",
-        // loadOp: "load",
+        // clearValue: [1.0, 1.0, 1.0, 1.0],
+        // loadOp: "clear",
+        loadOp: "load",
         storeOp: "store",
       },
     ],
