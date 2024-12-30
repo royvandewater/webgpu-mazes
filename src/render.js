@@ -45,12 +45,13 @@ export const render = async (device, maze) => {
     ],
   };
 
+  const dimensions = Float32Array.from([-1, -1, width, height]);
   const dimensionsBuffer = device.createBuffer({
     label: "dimensions buffer",
-    size: 4 * 4, // 4 32-bit floats
+    size: dimensions.byteLength,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
-  device.queue.writeBuffer(dimensionsBuffer, 0, Float32Array.from([-1, -1, width, height]));
+  device.queue.writeBuffer(dimensionsBuffer, 0, dimensions);
 
   const bindGroup = device.createBindGroup({
     label: "objects bind group",

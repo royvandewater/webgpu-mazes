@@ -32,7 +32,7 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
     },
   });
 
-  // size * 2 * 6 * 4 because we have 2 coordinates per vertex, 6 vertices per quad, and potentially 4 quads per cell
+  // size * 2 * 6 * 4 because we have 2 coordinates per vertex, 6 vertices per quad, and up to 4 quads per cell
   const input = new Float32Array(size * 2 * 6 * 4).fill(seed);
 
   const workBuffer = device.createBuffer({
@@ -42,12 +42,13 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
   });
   device.queue.writeBuffer(workBuffer, 0, input);
 
+  const dimensions = Float32Array.from([width, height]);
   const dimensionsBuffer = device.createBuffer({
     label: "dimensions buffer",
-    size: 2 * 4, // 2 32-bit integers
+    size: dimensions.byteLength,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
-  device.queue.writeBuffer(dimensionsBuffer, 0, Uint32Array.from([width, height]));
+  device.queue.writeBuffer(dimensionsBuffer, 0, dimensions);
 
   const resultBuffer = device.createBuffer({
     label: "shared result buffer",
@@ -58,7 +59,6 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
   const bindGroup = device.createBindGroup({
     label: "bind group for work buffer",
     layout: pipeline.getBindGroupLayout(0),
-    // binding 0 corresponds to the @group(0) @binding(0) in the compute shader
     entries: [
       { binding: 0, resource: { buffer: workBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
