@@ -2,7 +2,7 @@ import { autoResize } from "./resize.js";
 import { resolveShader } from "./resolveShader.js";
 
 export const render = async (device, maze) => {
-  const { quads, buffer: sharedResultBuffer, width, height } = maze;
+  const { buffer: sharedResultBuffer, width, height } = maze;
 
   const canvas = document.querySelector("canvas");
   const context = canvas.getContext("webgpu");
