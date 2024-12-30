@@ -118,7 +118,7 @@ export const render = async (device, maze) => {
     const cellPass = encoder.beginRenderPass(cellRenderPassDescriptor);
     cellPass.setPipeline(cellPipeline);
     cellPass.setBindGroup(0, cellBindGroup);
-    cellPass.draw(width * height * 2 * 6 * 4);
+    cellPass.draw(width * height * 2 * 6 * 2);
     cellPass.end();
 
     borderRenderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();

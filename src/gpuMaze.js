@@ -32,8 +32,8 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
     },
   });
 
-  // size * 2 * 6 * 4 because we have 2 coordinates per vertex, 6 vertices per quad, and up to 4 quads per cell
-  const input = new Float32Array(size * 2 * 6 * 4).fill(seed);
+  // size * 2 * 6 * 2 because we have 2 coordinates per vertex, 6 vertices per quad, and up to 2 quads per cell
+  const input = new Float32Array(size * 2 * 6 * 2).fill(seed);
 
   const workBuffer = device.createBuffer({
     label: "work buffer",
