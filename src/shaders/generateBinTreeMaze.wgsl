@@ -7,12 +7,10 @@
 @compute @workgroup_size(1) fn generate(
   @builtin(global_invocation_id) id: vec3u
 ) {
-  let i = id.x;
+  let i = id.x + (id.y * dimensions.x);
   let seed = f32(i) * data[i];
 
-  let position = cellIndexToPosition(i);
-
-  let values = generateCell(position.x, position.y, seed);
+  let values = generateCell(id.x, id.y, seed);
 
   for (var j: u32 = 0; j < 48; j++) {
     data[i * 48 + j] = values[j];

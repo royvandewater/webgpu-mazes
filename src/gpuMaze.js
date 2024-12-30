@@ -69,7 +69,7 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
   const pass = encoder.beginComputePass({ label: "maze compute pass" });
   pass.setPipeline(pipeline);
   pass.setBindGroup(0, bindGroup);
-  pass.dispatchWorkgroups(size);
+  pass.dispatchWorkgroups(width, height);
   pass.end();
 
   encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);
