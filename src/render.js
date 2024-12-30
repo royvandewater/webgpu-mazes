@@ -72,8 +72,7 @@ export const render = async (device, maze) => {
       targets: [{ format: presentationFormat }],
     },
     primitive: {
-      // we _could_ use triangle-strip here, but lets get it working first
-      topology: "triangle-list",
+      topology: "triangle-strip",
     },
   });
 
@@ -101,9 +100,9 @@ export const render = async (device, maze) => {
     label: "border render pass",
     colorAttachments: [
       {
-        loadOp: "load",
         // clearValue: [1.0, 1.0, 1.0, 1.0],
         // loadOp: "clear",
+        loadOp: "load",
         storeOp: "store",
       },
     ],
@@ -127,7 +126,7 @@ export const render = async (device, maze) => {
     const borderPass = encoder.beginRenderPass(borderRenderPassDescriptor);
     borderPass.setPipeline(borderPipeline);
     borderPass.setBindGroup(0, borderBindGroup);
-    borderPass.draw(2 * 6 * 2 * 4);
+    borderPass.draw(13); // should be 9 if we didn't back track
     borderPass.end();
 
     device.queue.submit([encoder.finish()]);

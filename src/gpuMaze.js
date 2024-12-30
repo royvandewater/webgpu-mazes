@@ -83,11 +83,10 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
 };
 
 const generateBorderBuffer = (device, width, height) => {
-  const triangles = Float32Array.from(borderTriangles(width, height).flat(2));
+  const triangles = Float32Array.from(borderTriangleStrip(width, height).flat(2));
 
   const buffer = device.createBuffer({
     label: "border buffer",
-    // 2 values per vertex, 6 vertices per triangle, 2 triangles per quad, 4 quads total (top, bottom, left, right)
     size: triangles.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   });
@@ -96,47 +95,20 @@ const generateBorderBuffer = (device, width, height) => {
   return buffer;
 };
 
-const borderTriangles = (width, height) => {
+const borderTriangleStrip = (width, height) => {
   return [
-    [
-      // bottom left
-      [-0.55, -0.55],
-      [-0.55, -0.45],
-      [width - 0.55, -0.55],
-      // bottom right
-      [-0.55, -0.45],
-      [width - 0.55, -0.55],
-      [width - 0.55, -0.45],
-    ],
-    [
-      // top left
-      [-0.55, height - 0.55],
-      [-0.55, height - 0.45],
-      [width - 0.55, height - 0.55],
-      // top right
-      [-0.55, height - 0.45],
-      [width - 0.55, height - 0.55],
-      [width - 0.55, height - 0.45],
-    ],
-    [
-      // left bottom
-      [-0.55, -0.55],
-      [-0.45, -0.55],
-      [-0.55, height - 0.45],
-      // left top
-      [-0.45, -0.55],
-      [-0.55, height - 0.45],
-      [-0.45, height - 0.45],
-    ],
-    [
-      // right bottom
-      [width - 0.55, -0.55],
-      [width - 0.45, -0.55],
-      [width - 0.55, height - 0.45],
-      // right top
-      [width - 0.45, -0.55],
-      [width - 0.55, height - 0.45],
-      [width - 0.45, height - 0.45],
-    ],
+    [-0.55, -0.45],
+    [-0.55, -0.55], // bottom left
+    [width - 0.45, -0.45],
+    [width - 0.45, -0.55], // bottom right
+    [width - 0.55, -0.55], // back track a little
+    [width - 0.45, height - 0.45], // top right
+    [width - 0.55, height - 0.45],
+    [width - 0.55, height - 0.55], // back track a little
+    [-0.55, height - 0.45], // top left
+    [-0.55, height - 0.55],
+    [-0.45, height - 0.55], // back track a little
+    [-0.55, -0.55], // bottom left
+    [-0.45, -0.55],
   ];
 };
