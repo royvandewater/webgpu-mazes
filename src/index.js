@@ -20,8 +20,8 @@ const main = async () => {
   assert(device, new Error("Failed to get WebGPU device"));
 
   const params = new URLSearchParams(window.location.search);
-  const height = Number(params.get("height")) || defaultNumCellsForHeightOfWindow();
-  const width = Number(params.get("width")) || Math.floor(height * windowAspectRatio());
+  const width = Number(params.get("width")) || defaultNumCellsForWidthOfWindow();
+  const height = Number(params.get("height")) || Math.floor(width * windowAspectRatio());
   const thickness = Number(params.get("thickness")) || 0.5;
   const seed = Number(params.get("seed")) || Math.random() * maxSize;
   const size = height * width;
@@ -35,9 +35,9 @@ const main = async () => {
 main();
 
 const windowAspectRatio = () => {
-  return window.innerHeight / window.innerWidth;
+  return window.innerWidth / window.innerHeight;
 };
 
-const defaultNumCellsForHeightOfWindow = () => {
-  return Math.floor(window.innerHeight / 30);
+const defaultNumCellsForWidthOfWindow = () => {
+  return Math.floor(window.innerWidth / 10);
 };
