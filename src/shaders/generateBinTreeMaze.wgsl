@@ -3,6 +3,7 @@
 
 @group(0) @binding(0) var<storage, read_write> data: array<f32>;
 @group(0) @binding(1) var<uniform> dimensions: vec2u;
+@group(0) @binding(2) var<uniform> thickness: f32;
 
 @compute @workgroup_size(1) fn generate(
   @builtin(global_invocation_id) id: vec3u
@@ -10,7 +11,7 @@
   let i = id.x + (id.y * dimensions.x);
   let seed = f32(i) * data[i];
 
-  let values = generateCell(id.x, id.y, seed);
+  let values = generateCell(id.x, id.y, seed, thickness);
 
   for (var j: u32 = 0; j < 24; j++) {
     data[i * 24 + j] = values[j];
@@ -21,32 +22,32 @@ fn cellIndexToPosition(cellIndex: u32) -> vec2u {
   return vec2u(cellIndex % dimensions.x, cellIndex / dimensions.x);
 }
 
-fn generateCell(x: u32, y: u32, seed: f32) -> array<f32, 24> {
+fn generateCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<f32, 24> {
   return flatten2Quads(array<array<vec2f, 6>, 2>(
-    topForCell(x, y, seed),
-    rightForCell(x, y, seed),
+    topForCell(x, y, seed, thickness),
+    rightForCell(x, y, seed, thickness),
   ));
 }
 
-fn topForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
+fn topForCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<vec2f, 6> {
   if (x == dimensions.x - 1) {
     return empty();
   }
 
   if (hashCell(x, y, seed) < 0.5) {
-    return top(x, y);
+    return top(x, y, thickness);
   }
 
   return empty();
 }
 
-fn rightForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
-  if (y == dimensions.y) {
+fn rightForCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<vec2f, 6> {
+  if (y == dimensions.y - 1) {
     return empty();
   }
 
   if (hashCell(x, y, seed) >= 0.5) {
-    return right(x, y);
+    return right(x, y, thickness);
   }
 
   return empty();

@@ -1,10 +1,10 @@
 import { resolveShader } from "./resolveShader.js";
 
-export const generateBinTreeMaze = async (device, width, height, seed) => {
+export const generateBinTreeMaze = async (device, width, height, seed, thickness) => {
   const shaderPath = "src/shaders/generateBinTreeMaze.wgsl";
   const size = width * height;
 
-  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, size, seed, width, height);
+  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, size, seed, width, height, thickness);
 
   return { cellBuffer, borderBuffer, width, height };
 };
@@ -12,12 +12,12 @@ export const generateBinTreeMaze = async (device, width, height, seed) => {
 export const generateHardcodedMaze = async (device) => {
   const shaderPath = "src/shaders/generateHardcodedMaze.wgsl";
 
-  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, 9, 1);
+  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, 9, 1, thickness);
 
   return { cellBuffer, borderBuffer, width, height };
 };
 
-export const compute = async (device, shaderPath, size, seed, width, height) => {
+export const compute = async (device, shaderPath, size, seed, width, height, thickness) => {
   const module = await device.createShaderModule({
     label: "doubling compute module",
     code: await resolveShader(shaderPath),
@@ -50,6 +50,13 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
   });
   device.queue.writeBuffer(dimensionsBuffer, 0, dimensions);
 
+  const thicknessBuffer = device.createBuffer({
+    label: "thickness buffer",
+    size: Float32Array.BYTES_PER_ELEMENT,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(thicknessBuffer, 0, Float32Array.from([thickness]));
+
   const resultBuffer = device.createBuffer({
     label: "shared result buffer",
     size: input.byteLength,
@@ -62,6 +69,7 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
     entries: [
       { binding: 0, resource: { buffer: workBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
+      { binding: 2, resource: { buffer: thicknessBuffer } },
     ],
   });
 
@@ -77,13 +85,13 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
   device.queue.submit([commandBuffer]);
   await device.queue.onSubmittedWorkDone();
 
-  const borderBuffer = generateBorderBuffer(device, width, height);
+  const borderBuffer = generateBorderBuffer(device, width, height, thickness);
 
   return { cellBuffer: resultBuffer, borderBuffer };
 };
 
-const generateBorderBuffer = (device, width, height) => {
-  const triangles = Float32Array.from(borderTriangleStrip(width, height).flat(2));
+const generateBorderBuffer = (device, width, height, thickness) => {
+  const triangles = Float32Array.from(borderTriangleStrip(width, height, thickness).flat(2));
 
   const buffer = device.createBuffer({
     label: "border buffer",
@@ -95,17 +103,19 @@ const generateBorderBuffer = (device, width, height) => {
   return buffer;
 };
 
-const borderTriangleStrip = (width, height) => {
+const borderTriangleStrip = (width, height, thickness) => {
+  const h = thickness / 2;
+
   return [
-    [-0.55, -0.55], // bottom left
-    [-0.45, -0.45], // bottom left inner
-    [width - 0.45, -0.55], // bottom right
-    [width - 0.55, -0.45], // bottom right inner
-    [width - 0.45, height - 0.45], // top right
-    [width - 0.55, height - 0.55], // top right inner
-    [-0.55, height - 0.45], // top left
-    [-0.45, height - 0.55], // top left inner
-    [-0.55, -0.55], // bottom left
-    [-0.45, -0.45], // bottom left inner
+    [-0.5 - h, -0.5 - h], // bottom left
+    [-0.5 + h, -0.5 + h], // bottom left inner
+    [width - 0.5 + h, -0.5 - h], // bottom right
+    [width - 0.5 - h, -0.5 + h], // bottom right inner
+    [width - 0.5 + h, height - 0.5 + h], // top right
+    [width - 0.5 - h, height - 0.5 - h], // top right inner
+    [-0.5 - h, height - 0.5 + h], // top left
+    [-0.5 + h, height - 0.5 - h], // top left inner
+    [-0.5 - h, -0.5 - h], // bottom left
+    [-0.5 + h, -0.5 + h], // bottom left inner
   ];
 };

@@ -20,14 +20,15 @@ const main = async () => {
   assert(device, new Error("Failed to get WebGPU device"));
 
   const params = new URLSearchParams(window.location.search);
-  const height = Number(params.get("height")) || 100;
-  const width = Number(params.get("width")) || height * windowAspectRatio();
+  const height = Number(params.get("height")) || defaultNumCellsForHeightOfWindow();
+  const width = Number(params.get("width")) || Math.floor(height * windowAspectRatio());
+  const thickness = Number(params.get("thickness")) || 0.5;
   const seed = Number(params.get("seed")) || Math.random() * maxSize;
   const size = height * width;
   if (size > maxSize) {
     throw new Error(`Size (${size}) too large, max size is ${maxSize} (height * width)`);
   }
-  const maze = await generateBinTreeMazeGPU(device, height, width, seed);
+  const maze = await generateBinTreeMazeGPU(device, height, width, seed, thickness);
 
   await render(device, maze);
 };
@@ -35,4 +36,8 @@ main();
 
 const windowAspectRatio = () => {
   return window.innerHeight / window.innerWidth;
+};
+
+const defaultNumCellsForHeightOfWindow = () => {
+  return Math.floor(window.innerHeight / 30);
 };

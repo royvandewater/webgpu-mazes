@@ -1,7 +1,5 @@
-const thickness = 0.1;
-const halfThickness = thickness / 2.0;
 
-fn top(x: u32, y: u32) -> array<vec2f, 6> {
+fn top(x: u32, y: u32, thickness: f32) -> array<vec2f, 6> {
   // x, y is the center of the square.
   // the top edge is 0.5 units above the center
   // the quad should be vertically centered about the top edge
@@ -10,6 +8,7 @@ fn top(x: u32, y: u32) -> array<vec2f, 6> {
   let topEdge = f32(y) + 0.5;
   let leftEdge = f32(x) - 0.5;
   let rightEdge = f32(x) + 0.5;
+  let halfThickness = thickness / 2.0;
 
   return array<vec2f, 6>(
     vec2f(leftEdge - halfThickness, topEdge - halfThickness),
@@ -21,10 +20,11 @@ fn top(x: u32, y: u32) -> array<vec2f, 6> {
   );
 };
 
-fn bottom(x: u32, y: u32) -> array<vec2f, 6> {
+fn bottom(x: u32, y: u32, thickness: f32) -> array<vec2f, 6> {
   let bottomEdge = f32(y) - 0.5;
   let leftEdge = f32(x) - 0.5;
   let rightEdge = f32(x) + 0.5;
+  let halfThickness = thickness / 2.0;
 
   return array<vec2f, 6>(
     vec2f(leftEdge - halfThickness, bottomEdge - halfThickness),
@@ -37,10 +37,11 @@ fn bottom(x: u32, y: u32) -> array<vec2f, 6> {
 };
 
 
-fn left(x: u32, y: u32) -> array<vec2f, 6> {
+fn left(x: u32, y: u32, thickness: f32) -> array<vec2f, 6> {
   let leftEdge = f32(x) - 0.5;
   let topEdge = f32(y) + 0.5;
   let bottomEdge = f32(y) - 0.5;
+  let halfThickness = thickness / 2.0;
 
   return array<vec2f, 6>(
     vec2f(leftEdge - halfThickness, topEdge + halfThickness),
@@ -52,10 +53,11 @@ fn left(x: u32, y: u32) -> array<vec2f, 6> {
   );
 };
 
-fn right(x: u32, y: u32) -> array<vec2f, 6> {
+fn right(x: u32, y: u32, thickness: f32) -> array<vec2f, 6> {
   let rightEdge = f32(x) + 0.5;
   let topEdge = f32(y) + 0.5;
   let bottomEdge = f32(y) - 0.5;
+  let halfThickness = thickness / 2.0;
 
   return array<vec2f, 6>(
     vec2f(rightEdge - halfThickness, topEdge + halfThickness),
