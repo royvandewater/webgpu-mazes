@@ -32,6 +32,11 @@ export const render = async (device, maze) => {
       module,
       targets: [{ format: presentationFormat }],
     },
+    primitive: {
+      // we're stuck using triangle-list because we can't render disjoint quads
+      // using triangle-strip.
+      topology: "triangle-list",
+    },
   });
 
   const renderPassDescriptor = {

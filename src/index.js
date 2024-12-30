@@ -10,7 +10,14 @@ import {
 } from "./maze.js";
 import { round } from "remeda";
 
-const maxSize = 65535;
+// we're limited by the size of the work buffer. Am not sure if this is GPU specific or not.
+// ChatGPT says we can work around this by running our compute shader in batches. However,
+// that will not allow us to bind a single buffer to both the compute shader and the render pass.
+// An alternative would be to optimize the compute shader cell layout. We're currently assuming it
+// returns 4 quads per cell, but we could return 2 quads per cell and then draw the border quads
+// in a separate buffer. :thinking: perhaps we can switch to fp16?
+const maxSize = 134217728 / 192;
+// const maxSize = Infinity;
 
 const main = async () => {
   const adapter = await navigator.gpu.requestAdapter();
