@@ -29,7 +29,7 @@ fn generateCell(x: u32, y: u32, seed: f32) -> array<f32, 24> {
 }
 
 fn topForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
-  if (x >= dimensions.x - 1) {
+  if (x == dimensions.x - 1) {
     return empty();
   }
 
@@ -41,14 +41,13 @@ fn topForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
 }
 
 fn rightForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
-  if (y == dimensions.y - 1) {
+  if (y == dimensions.y) {
     return empty();
   }
 
   if (hashCell(x, y, seed) >= 0.5) {
     return right(x, y);
   }
-
 
   return empty();
 }
