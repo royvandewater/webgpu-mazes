@@ -74,10 +74,19 @@ export const render = async (maze) => {
 
   const storageValues = new Float32Array(storageBufferSize / 4);
 
+  const dimensionsBuffer = device.createBuffer({
+    label: "dimensions buffer",
+    size: 4 * 4, // 4 32-bit floats
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
   const bindGroup = device.createBindGroup({
     label: "objects bind group",
     layout: pipeline.getBindGroupLayout(0),
-    entries: [{ binding: 0, resource: { buffer: storageBuffer } }],
+    entries: [
+      { binding: 0, resource: { buffer: storageBuffer } },
+      { binding: 1, resource: { buffer: dimensionsBuffer } },
+    ],
   });
 
   const renderLoop = () => {
@@ -96,26 +105,14 @@ export const render = async (maze) => {
 
     quads.forEach((quad, ndx) => {
       const offset = ndx * (unitSize / 4);
-      const [[x1, y1], [x2, y2], [x3, y3], [x4, y4], [x5, y5], [x6, y6]] = quad;
-      const values = [
-        scaleCoordinate(x1, xMin, xMax),
-        scaleCoordinate(y1, yMin, yMax),
-        scaleCoordinate(x2, xMin, xMax),
-        scaleCoordinate(y2, yMin, yMax),
-        scaleCoordinate(x3, xMin, xMax),
-        scaleCoordinate(y3, yMin, yMax),
-        scaleCoordinate(x4, xMin, xMax),
-        scaleCoordinate(y4, yMin, yMax),
-        scaleCoordinate(x5, xMin, xMax),
-        scaleCoordinate(y5, yMin, yMax),
-        scaleCoordinate(x6, xMin, xMax),
-        scaleCoordinate(y6, yMin, yMax),
-      ];
 
-      storageValues.set(values, offset);
+      storageValues.set(quad.flat(), offset);
     });
 
     device.queue.writeBuffer(storageBuffer, 0, storageValues);
+
+    const dimensionsValues = Float32Array.from([xMin, yMin, xMax, yMax]);
+    device.queue.writeBuffer(dimensionsBuffer, 0, dimensionsValues);
 
     pass.setBindGroup(0, bindGroup);
     pass.draw(2 * numVertices);
@@ -127,9 +124,4 @@ export const render = async (maze) => {
     requestAnimationFrame(() => renderLoop());
   };
   renderLoop();
-};
-
-// moves the coordinate to a -1 to 1 range
-const scaleCoordinate = (v, min, max) => {
-  return ((v - min) / (max - min)) * 2 - 1;
 };
