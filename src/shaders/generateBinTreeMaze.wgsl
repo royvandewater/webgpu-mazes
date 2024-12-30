@@ -14,8 +14,8 @@
 
   let values = generateCell(position.x, position.y, seed);
 
-  for (var j: i32 = 0; j < 48; j++) {
-    data[i32(i) * 48 + j] = values[j];
+  for (var j: u32 = 0; j < 48; j++) {
+    data[i * 48 + j] = values[j];
   }
 }
 
