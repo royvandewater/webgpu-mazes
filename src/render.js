@@ -76,10 +76,10 @@ export const render = async (device, maze) => {
     pass.draw(width * height * 2 * 6 * 4);
     pass.end();
 
-    const commandBuffer = encoder.finish();
-    device.queue.submit([commandBuffer]);
+    device.queue.submit([encoder.finish()]);
 
-    requestAnimationFrame(() => renderLoop());
+    requestAnimationFrame(renderLoop);
   };
+
   renderLoop();
 };
