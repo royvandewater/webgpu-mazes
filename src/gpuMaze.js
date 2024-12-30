@@ -42,7 +42,7 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
   });
   device.queue.writeBuffer(workBuffer, 0, input);
 
-  const dimensions = Float32Array.from([width, height]);
+  const dimensions = Uint32Array.from([width, height]);
   const dimensionsBuffer = device.createBuffer({
     label: "dimensions buffer",
     size: dimensions.byteLength,
