@@ -1,3 +1,4 @@
+import { assert } from "./assert.js";
 import { render } from "./render.js";
 import {
   generateBinTreeMaze as generateBinTreeMazeGPU,
@@ -12,6 +13,9 @@ import { round } from "remeda";
 const maxSize = 65535;
 
 const main = async () => {
+  const adapter = await navigator.gpu.requestAdapter();
+  const device = await adapter.requestDevice();
+  assert(device, new Error("Failed to get WebGPU device"));
   // const mazeCPU = await generateHardcodedMaze();
   // const mazeGPU = await generateHardcodedMazeGPU();
 
@@ -21,15 +25,13 @@ const main = async () => {
   const seed = Number(params.get("seed")) || Math.random() * maxSize;
   const size = height * width;
   if (size > maxSize) {
-    throw new Error(
-      `Size (${size}) too large, max size is ${maxSize} (height * width)`
-    );
+    throw new Error(`Size (${size}) too large, max size is ${maxSize} (height * width)`);
   }
-  const maze = await generateBinTreeMazeGPU(height, width, seed);
+  const maze = await generateBinTreeMazeGPU(device, height, width, seed);
   // const maze = await generateBinTreeMazeCPU(height, width);
   // debugMazes({ mazeGPU, mazeCPU });
 
-  await render(maze);
+  await render(device, maze);
   // await render(mazeCPU);
   // await compute();
 };

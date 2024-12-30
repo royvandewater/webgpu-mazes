@@ -1,13 +1,8 @@
-import { assert } from "./assert.js";
 import { autoResize } from "./resize.js";
 import { resolveShader } from "./resolveShader.js";
 
-export const render = async (maze) => {
-  const { quads } = maze;
-
-  const adapter = await navigator.gpu.requestAdapter();
-  const device = await adapter.requestDevice();
-  assert(device, new Error("Failed to get WebGPU device"));
+export const render = async (device, maze) => {
+  const { quads, buffer: sharedResultBuffer, width, height } = maze;
 
   const canvas = document.querySelector("canvas");
   const context = canvas.getContext("webgpu");
@@ -50,41 +45,18 @@ export const render = async (maze) => {
     ],
   };
 
-  const vertices = quads.flat();
-
-  const xs = vertices.map(([x, _y]) => x);
-  const ys = vertices.map(([_x, y]) => y);
-
-  const xMin = xs.reduce((min, x) => Math.min(min, x), xs[0]);
-  const xMax = xs.reduce((max, x) => Math.max(max, x), xs[0]);
-  const yMin = ys.reduce((min, y) => Math.min(min, y), ys[0]);
-  const yMax = ys.reduce((max, y) => Math.max(max, y), ys[0]);
-
-  const kNumObjects = quads.length;
-
-  const unitSize = 6 * 4 * 4; // each quad is 6 vertices of 4 32bit floats (4 bytes each)
-  const storageBufferSize = unitSize * kNumObjects;
-  const numVertices = 6 * kNumObjects;
-
-  const storageBuffer = device.createBuffer({
-    label: "storage buffer",
-    size: storageBufferSize,
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-  });
-
-  const storageValues = new Float32Array(storageBufferSize / 4);
-
   const dimensionsBuffer = device.createBuffer({
     label: "dimensions buffer",
     size: 4 * 4, // 4 32-bit floats
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
+  device.queue.writeBuffer(dimensionsBuffer, 0, Float32Array.from([-1, -1, width, height]));
 
   const bindGroup = device.createBindGroup({
     label: "objects bind group",
     layout: pipeline.getBindGroupLayout(0),
     entries: [
-      { binding: 0, resource: { buffer: storageBuffer } },
+      { binding: 0, resource: { buffer: sharedResultBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
     ],
   });
@@ -92,9 +64,7 @@ export const render = async (maze) => {
   const renderLoop = () => {
     // Get the current texture from the canvas context and
     // set it as the texture to render to.
-    renderPassDescriptor.colorAttachments[0].view = context
-      .getCurrentTexture()
-      .createView();
+    renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
 
     // make a command encoder to start encoding commands
     const encoder = device.createCommandEncoder({ label: "out encoder" });
@@ -102,20 +72,8 @@ export const render = async (maze) => {
     // make a render pass encoder to encode render specific commands
     const pass = encoder.beginRenderPass(renderPassDescriptor);
     pass.setPipeline(pipeline);
-
-    quads.forEach((quad, ndx) => {
-      const offset = ndx * (unitSize / 4);
-
-      storageValues.set(quad.flat(), offset);
-    });
-
-    device.queue.writeBuffer(storageBuffer, 0, storageValues);
-
-    const dimensionsValues = Float32Array.from([xMin, yMin, xMax, yMax]);
-    device.queue.writeBuffer(dimensionsBuffer, 0, dimensionsValues);
-
     pass.setBindGroup(0, bindGroup);
-    pass.draw(2 * numVertices);
+    pass.draw(width * height * 2 * 6 * 4);
     pass.end();
 
     const commandBuffer = encoder.finish();

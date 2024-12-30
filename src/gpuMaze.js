@@ -2,28 +2,24 @@ import { chunk } from "remeda";
 import { assert } from "./assert.js";
 import { resolveShader } from "./resolveShader.js";
 
-export const generateBinTreeMaze = async (width, height, seed) => {
+export const generateBinTreeMaze = async (device, width, height, seed) => {
   const shaderPath = "src/shaders/generateBinTreeMaze.wgsl";
   const size = width * height;
 
-  const { quads } = await compute(shaderPath, size, seed, width, height);
+  const { quads, buffer } = await compute(device, shaderPath, size, seed, width, height);
 
-  return { quads };
+  return { quads, buffer, width, height };
 };
 
-export const generateHardcodedMaze = async () => {
+export const generateHardcodedMaze = async (device) => {
   const shaderPath = "src/shaders/generateHardcodedMaze.wgsl";
 
-  const { quads } = await compute(shaderPath, 9, 1);
+  const { quads, buffer } = await compute(device, shaderPath, 9, 1);
 
-  return { quads };
+  return { quads, buffer, width, height };
 };
 
-export const compute = async (shaderPath, size, seed, width, height) => {
-  const adapter = await navigator.gpu.requestAdapter();
-  const device = await adapter.requestDevice();
-  assert(device, new Error("Failed to get WebGPU device"));
-
+export const compute = async (device, shaderPath, size, seed, width, height) => {
   const module = await device.createShaderModule({
     label: "doubling compute module",
     code: await resolveShader(shaderPath),
@@ -45,10 +41,7 @@ export const compute = async (shaderPath, size, seed, width, height) => {
   const workBuffer = device.createBuffer({
     label: "work buffer",
     size: input.byteLength,
-    usage:
-      GPUBufferUsage.STORAGE |
-      GPUBufferUsage.COPY_SRC |
-      GPUBufferUsage.COPY_DST,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
   });
 
   const dimensionsBuffer = device.createBuffer({
@@ -72,6 +65,12 @@ export const compute = async (shaderPath, size, seed, width, height) => {
     usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
   });
 
+  const sharedResultBuffer = device.createBuffer({
+    label: "shared result buffer",
+    size: input.byteLength,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+  });
+
   const bindGroup = device.createBindGroup({
     label: "bind group for work buffer",
     layout: pipeline.getBindGroupLayout(0),
@@ -90,14 +89,13 @@ export const compute = async (shaderPath, size, seed, width, height) => {
   pass.end();
 
   encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);
+  encoder.copyBufferToBuffer(workBuffer, 0, sharedResultBuffer, 0, sharedResultBuffer.size);
   const commandBuffer = encoder.finish();
   device.queue.submit([commandBuffer]);
+  await device.queue.onSubmittedWorkDone();
 
   await resultBuffer.mapAsync(GPUMapMode.READ);
   const result = new Float32Array(resultBuffer.getMappedRange());
-
-  // console.log("input", input);
-  // console.log("result", result);
 
   const vertexCoordinates = Array.from(result).filter((v) => v >= -1);
   resultBuffer.unmap();
@@ -105,5 +103,5 @@ export const compute = async (shaderPath, size, seed, width, height) => {
   const vertices = chunk(vertexCoordinates, 2);
   const quads = chunk(vertices, 6);
 
-  return { quads };
+  return { quads, buffer: sharedResultBuffer };
 };
