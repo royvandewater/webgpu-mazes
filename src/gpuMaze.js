@@ -4,17 +4,17 @@ export const generateBinTreeMaze = async (device, width, height, seed) => {
   const shaderPath = "src/shaders/generateBinTreeMaze.wgsl";
   const size = width * height;
 
-  const { buffer } = await compute(device, shaderPath, size, seed, width, height);
+  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, size, seed, width, height);
 
-  return { buffer, width, height };
+  return { cellBuffer, borderBuffer, width, height };
 };
 
 export const generateHardcodedMaze = async (device) => {
   const shaderPath = "src/shaders/generateHardcodedMaze.wgsl";
 
-  const { buffer } = await compute(device, shaderPath, 9, 1);
+  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, 9, 1);
 
-  return { buffer, width, height };
+  return { cellBuffer, borderBuffer, width, height };
 };
 
 export const compute = async (device, shaderPath, size, seed, width, height) => {
@@ -77,5 +77,66 @@ export const compute = async (device, shaderPath, size, seed, width, height) => 
   device.queue.submit([commandBuffer]);
   await device.queue.onSubmittedWorkDone();
 
-  return { buffer: resultBuffer };
+  const borderBuffer = generateBorderBuffer(device, width, height);
+
+  return { cellBuffer: resultBuffer, borderBuffer };
+};
+
+const generateBorderBuffer = (device, width, height) => {
+  const triangles = Float32Array.from(borderTriangles(width, height).flat(2));
+
+  const buffer = device.createBuffer({
+    label: "border buffer",
+    // 2 values per vertex, 6 vertices per triangle, 2 triangles per quad, 4 quads total (top, bottom, left, right)
+    size: triangles.byteLength,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(buffer, 0, triangles);
+
+  return buffer;
+};
+
+const borderTriangles = (width, height) => {
+  return [
+    [
+      // bottom left
+      [-0.55, -0.55],
+      [-0.55, -0.45],
+      [width - 0.55, -0.55],
+      // bottom right
+      [-0.55, -0.45],
+      [width - 0.55, -0.55],
+      [width - 0.55, -0.45],
+    ],
+    [
+      // top left
+      [-0.55, height - 0.55],
+      [-0.55, height - 0.45],
+      [width - 0.55, height - 0.55],
+      // top right
+      [-0.55, height - 0.45],
+      [width - 0.55, height - 0.55],
+      [width - 0.55, height - 0.45],
+    ],
+    [
+      // left bottom
+      [-0.55, -0.55],
+      [-0.45, -0.55],
+      [-0.55, height - 0.45],
+      // left top
+      [-0.45, -0.55],
+      [-0.55, height - 0.45],
+      [-0.45, height - 0.45],
+    ],
+    [
+      // right bottom
+      [width - 0.55, -0.55],
+      [width - 0.45, -0.55],
+      [width - 0.55, height - 0.45],
+      // right top
+      [width - 0.45, -0.55],
+      [width - 0.55, height - 0.45],
+      [width - 0.45, height - 0.45],
+    ],
+  ];
 };

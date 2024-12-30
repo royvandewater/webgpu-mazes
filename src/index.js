@@ -15,7 +15,10 @@ import { round } from "remeda";
 // that will not allow us to bind a single buffer to both the compute shader and the render pass.
 // An alternative would be to optimize the compute shader cell layout. We're currently assuming it
 // returns 4 quads per cell, but we could return 2 quads per cell and then draw the border quads
-// in a separate buffer. :thinking: perhaps we can switch to fp16?
+// in a separate buffer.
+// we can't use fp16 because most browsers don't support Float16Array, which is necessary to be able
+// to write our data to the GPU. We could technically use a Float32Array, but that would require
+// a bunch of bit masking magic that I don't want to deal with.
 const maxSize = 134217728 / 192;
 // const maxSize = Infinity;
 

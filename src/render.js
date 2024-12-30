@@ -1,8 +1,11 @@
+import { assert } from "./assert.js";
 import { autoResize } from "./resize.js";
 import { resolveShader } from "./resolveShader.js";
 
 export const render = async (device, maze) => {
-  const { buffer: sharedResultBuffer, width, height } = maze;
+  const { cellBuffer, borderBuffer, width, height } = maze;
+  assert(cellBuffer, new Error("cellBuffer is required"));
+  assert(borderBuffer, new Error("borderBuffer is required"));
 
   const canvas = document.querySelector("canvas");
   const context = canvas.getContext("webgpu");
@@ -20,8 +23,8 @@ export const render = async (device, maze) => {
     code: await resolveShader("src/shaders/maze.wgsl"),
   });
 
-  const pipeline = await device.createRenderPipeline({
-    label: "maze pipeline",
+  const cellPipeline = await device.createRenderPipeline({
+    label: "maze cell pipeline",
     layout: "auto",
     vertex: {
       entryPoint: "vertexShader",
@@ -39,7 +42,51 @@ export const render = async (device, maze) => {
     },
   });
 
-  const renderPassDescriptor = {
+  const dimensions = Float32Array.from([-1, -1, width, height]);
+  const dimensionsBuffer = device.createBuffer({
+    label: "dimensions buffer",
+    size: dimensions.byteLength,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(dimensionsBuffer, 0, dimensions);
+
+  const cellBindGroup = device.createBindGroup({
+    label: "cell bind group",
+    layout: cellPipeline.getBindGroupLayout(0),
+    entries: [
+      { binding: 0, resource: { buffer: cellBuffer } },
+      { binding: 1, resource: { buffer: dimensionsBuffer } },
+    ],
+  });
+
+  const borderPipeline = await device.createRenderPipeline({
+    label: "maze border pipeline",
+    layout: "auto",
+    vertex: {
+      entryPoint: "vertexShader",
+      module,
+    },
+    fragment: {
+      entryPoint: "fragmentShader",
+      module,
+      targets: [{ format: presentationFormat }],
+    },
+    primitive: {
+      // we _could_ use triangle-strip here, but lets get it working first
+      topology: "triangle-list",
+    },
+  });
+
+  const borderBindGroup = device.createBindGroup({
+    label: "border bind group",
+    layout: borderPipeline.getBindGroupLayout(0),
+    entries: [
+      { binding: 0, resource: { buffer: borderBuffer } },
+      { binding: 1, resource: { buffer: dimensionsBuffer } },
+    ],
+  });
+
+  const cellRenderPassDescriptor = {
     label: "our basic canvas render pass",
     colorAttachments: [
       {
@@ -50,37 +97,38 @@ export const render = async (device, maze) => {
     ],
   };
 
-  const dimensions = Float32Array.from([-1, -1, width, height]);
-  const dimensionsBuffer = device.createBuffer({
-    label: "dimensions buffer",
-    size: dimensions.byteLength,
-    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-  });
-  device.queue.writeBuffer(dimensionsBuffer, 0, dimensions);
-
-  const bindGroup = device.createBindGroup({
-    label: "objects bind group",
-    layout: pipeline.getBindGroupLayout(0),
-    entries: [
-      { binding: 0, resource: { buffer: sharedResultBuffer } },
-      { binding: 1, resource: { buffer: dimensionsBuffer } },
+  const borderRenderPassDescriptor = {
+    label: "border render pass",
+    colorAttachments: [
+      {
+        loadOp: "load",
+        // clearValue: [1.0, 1.0, 1.0, 1.0],
+        // loadOp: "clear",
+        storeOp: "store",
+      },
     ],
-  });
+  };
 
   const renderLoop = () => {
-    // Get the current texture from the canvas context and
-    // set it as the texture to render to.
-    renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
-
     // make a command encoder to start encoding commands
     const encoder = device.createCommandEncoder({ label: "out encoder" });
 
-    // make a render pass encoder to encode render specific commands
-    const pass = encoder.beginRenderPass(renderPassDescriptor);
-    pass.setPipeline(pipeline);
-    pass.setBindGroup(0, bindGroup);
-    pass.draw(width * height * 2 * 6 * 4);
-    pass.end();
+    // Get the current texture from the canvas context and
+    // set it as the texture to render to.
+    cellRenderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+    const cellPass = encoder.beginRenderPass(cellRenderPassDescriptor);
+    cellPass.setPipeline(cellPipeline);
+    cellPass.setBindGroup(0, cellBindGroup);
+    cellPass.draw(width * height * 2 * 6 * 4);
+    cellPass.end();
+
+    borderRenderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+
+    const borderPass = encoder.beginRenderPass(borderRenderPassDescriptor);
+    borderPass.setPipeline(borderPipeline);
+    borderPass.setBindGroup(0, borderBindGroup);
+    borderPass.draw(2 * 6 * 2 * 4);
+    borderPass.end();
 
     device.queue.submit([encoder.finish()]);
 

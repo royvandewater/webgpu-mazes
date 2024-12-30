@@ -31,11 +31,11 @@ fn generateCell(x: u32, y: u32, seed: f32) -> array<f32, 48> {
 }
 
 fn topForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
-  if (y == dimensions.y - 1) {
-    return top(x, y);
-  }
+  // if (y == dimensions.y - 1) {
+  //   return top(x, y);
+  // }
 
-  if (x == dimensions.x - 1) {
+  if (x >= dimensions.x - 1) {
     return empty();
   }
 
@@ -47,9 +47,9 @@ fn topForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
 }
 
 fn rightForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
-  if (x == dimensions.x - 1) {
-    return right(x, y);
-  }
+  // if (x == dimensions.x - 1) {
+  //   return right(x, y);
+  // }
 
   if (y == dimensions.y - 1) {
     return empty();
@@ -64,17 +64,17 @@ fn rightForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
 }
 
 fn bottomForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
-  if (y == 0) {
-    return bottom(x, y);
-  }
+  // if (y == 0) {
+  //   return bottom(x, y);
+  // }
 
   return empty();
 }
 
 fn leftForCell(x: u32, y: u32, seed: f32) -> array<vec2f, 6> {
-  if (x == 0) {
-    return left(x, y);
-  }
+  // if (x == 0) {
+  //   return left(x, y);
+  // }
 
   return empty();
 }
