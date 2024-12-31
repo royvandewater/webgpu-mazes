@@ -2,12 +2,12 @@ import { assert } from "./assert.js";
 import { autoResize } from "./resize.js";
 import { resolveShader } from "./resolveShader.js";
 
-export const render = async (device, maze) => {
+export const render = async (device, maze, options) => {
   const { cellBuffer, borderBuffer, width, height } = maze;
   assert(cellBuffer, new Error("cellBuffer is required"));
   assert(borderBuffer, new Error("borderBuffer is required"));
 
-  const canvas = document.querySelector("canvas");
+  const canvas = document.querySelector("canvas#maze");
   const context = canvas.getContext("webgpu");
   const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
@@ -50,12 +50,21 @@ export const render = async (device, maze) => {
   });
   device.queue.writeBuffer(dimensionsBuffer, 0, dimensions);
 
+  const zoom = Float32Array.from([options.zoom]);
+  const zoomBuffer = device.createBuffer({
+    label: "zoom buffer",
+    size: zoom.byteLength,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(zoomBuffer, 0, zoom);
+
   const cellBindGroup = device.createBindGroup({
     label: "cell bind group",
     layout: cellPipeline.getBindGroupLayout(0),
     entries: [
       { binding: 0, resource: { buffer: cellBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
+      { binding: 2, resource: { buffer: zoomBuffer } },
     ],
   });
 
@@ -82,6 +91,7 @@ export const render = async (device, maze) => {
     entries: [
       { binding: 0, resource: { buffer: borderBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
+      { binding: 2, resource: { buffer: zoomBuffer } },
     ],
   });
 
@@ -111,6 +121,10 @@ export const render = async (device, maze) => {
   const renderLoop = () => {
     // make a command encoder to start encoding commands
     const encoder = device.createCommandEncoder({ label: "out encoder" });
+
+    // update the zoom buffer
+    zoom[0] = options.zoom;
+    device.queue.writeBuffer(zoomBuffer, 0, zoom);
 
     // Get the current texture from the canvas context and
     // set it as the texture to render to.
