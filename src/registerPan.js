@@ -1,6 +1,3 @@
-const scaleX = 0.0009;
-const scaleY = 0.000975;
-
 export function registerPan(canvas, callback) {
   let mouseDown = false;
 
@@ -16,8 +13,8 @@ export function registerPan(canvas, callback) {
     if (!mouseDown) return;
 
     callback({
-      dx: event.movementX * scaleX,
-      dy: event.movementY * scaleY,
+      dx: event.movementX,
+      dy: event.movementY,
     });
   });
 }
