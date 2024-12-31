@@ -50,13 +50,13 @@ export const render = async (device, maze, options) => {
   });
   device.queue.writeBuffer(dimensionsBuffer, 0, dimensions);
 
-  const zoom = Float32Array.from([options.zoom]);
-  const zoomBuffer = device.createBuffer({
-    label: "zoom buffer",
-    size: zoom.byteLength,
+  const camera = Float32Array.from([options.position.x, options.position.y, options.zoom]);
+  const cameraBuffer = device.createBuffer({
+    label: "camera buffer",
+    size: camera.byteLength,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
-  device.queue.writeBuffer(zoomBuffer, 0, zoom);
+  device.queue.writeBuffer(cameraBuffer, 0, camera);
 
   const cellBindGroup = device.createBindGroup({
     label: "cell bind group",
@@ -64,7 +64,7 @@ export const render = async (device, maze, options) => {
     entries: [
       { binding: 0, resource: { buffer: cellBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
-      { binding: 2, resource: { buffer: zoomBuffer } },
+      { binding: 2, resource: { buffer: cameraBuffer } },
     ],
   });
 
@@ -91,7 +91,7 @@ export const render = async (device, maze, options) => {
     entries: [
       { binding: 0, resource: { buffer: borderBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
-      { binding: 2, resource: { buffer: zoomBuffer } },
+      { binding: 2, resource: { buffer: cameraBuffer } },
     ],
   });
 
@@ -122,9 +122,9 @@ export const render = async (device, maze, options) => {
     // make a command encoder to start encoding commands
     const encoder = device.createCommandEncoder({ label: "out encoder" });
 
-    // update the zoom buffer
-    zoom[0] = options.zoom;
-    device.queue.writeBuffer(zoomBuffer, 0, zoom);
+    // update the camera buffer
+    camera.set([options.position.x, options.position.y, options.zoom]);
+    device.queue.writeBuffer(cameraBuffer, 0, camera);
 
     // Get the current texture from the canvas context and
     // set it as the texture to render to.

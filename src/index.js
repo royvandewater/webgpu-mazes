@@ -5,6 +5,7 @@ import {
   generateHardcodedMaze as generateHardcodedMazeGPU,
 } from "./gpuMaze.js";
 import { registerPinchZoom } from "./registerPinchZoom.js";
+import { registerPan } from "./registerPan.js";
 
 // we're limited by the size of the work buffer. Am not sure if this is GPU specific or not.
 // ChatGPT says we can work around this by running our compute shader in batches. However,
@@ -31,17 +32,18 @@ const main = async () => {
     throw new Error(`Size (${size}) too large, max size is ${maxSize} (height * width)`);
   }
   const maze = await generateBinTreeMazeGPU(device, height, width, seed, thickness);
-  const options = { zoom: 1 };
+  const options = { zoom: 1, position: { x: width / 2, y: height / 2 } };
 
   await render(device, maze, options);
 
   registerPinchZoom(document.querySelector("canvas#maze"), (amount) => {
-    if (amount === 0) return;
-    if (amount > 0) {
-      options.zoom *= 1 - Math.abs(amount) / 100;
-    } else {
-      options.zoom *= 1 + Math.abs(amount) / 100;
-    }
+    options.zoom *= 1 + amount / 100;
+  });
+
+  registerPan(document.querySelector("canvas#maze"), ({ dx, dy }) => {
+    const zoom = options.zoom;
+    options.position.x += dx * zoom;
+    options.position.y += dy * zoom;
   });
 };
 main();
