@@ -23,7 +23,20 @@
 
 // moves the coordinate to a -1 to 1 range, adjust for the camera's position and zoom
 fn scaleCoordinate(coordinate: vec2f, minMaxValues: vec4f, camera: vec3f) -> vec2f {
-  let cameraAdjustedCoordinate = vec2f(coordinate.x + camera.x, coordinate.y - camera.y) * (1 / camera.z);
+    // First normalize the coordinate to 0-1 range
+  let normalizedCoord = (coordinate - minMaxValues.xy) / (minMaxValues.zw - minMaxValues.xy);
 
-  return ((cameraAdjustedCoordinate - minMaxValues.xy) / (minMaxValues.zw - minMaxValues.xy)) * 2 - 1;
+
+  // Center the coordinate system (move 0,0 to center)
+  let centeredCoord = normalizedCoord - 0.5;
+
+
+  // Apply zoom to the centered coordinate
+  let zoomedCoordinate = centeredCoord * (1 / camera.z);
+
+  // Apply camera translation
+  let cameraAdjustedCoordinate = vec2f(zoomedCoordinate.x + camera.x, zoomedCoordinate.y - camera.y);
+
+  // Convert to clip space (-1 to 1 range)
+  return cameraAdjustedCoordinate * 2.0;
 }

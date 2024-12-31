@@ -32,7 +32,7 @@ const main = async () => {
     throw new Error(`Size (${size}) too large, max size is ${maxSize} (height * width)`);
   }
   const maze = await generateBinTreeMazeGPU(device, height, width, seed, thickness);
-  const options = { zoom: 1, position: { x: width / 2, y: height / 2 } };
+  const options = { zoom: 1, position: { x: 0, y: 0 } };
 
   await render(device, maze, options);
 
@@ -41,9 +41,8 @@ const main = async () => {
   });
 
   registerPan(document.querySelector("canvas#maze"), ({ dx, dy }) => {
-    const zoom = options.zoom;
-    options.position.x += dx * zoom;
-    options.position.y += dy * zoom;
+    options.position.x += dx;
+    options.position.y += dy;
   });
 };
 main();
