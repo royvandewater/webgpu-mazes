@@ -11,10 +11,10 @@
   let i = id.x + (id.y * dimensions.x);
   let seed = f32(i) * data[i];
 
-  let values = generateCell(id.x, id.y, seed, thickness);
+  let values = flattenQuad(generateCell(id.x, id.y, seed, thickness));
 
-  for (var j: u32 = 0; j < 24; j++) {
-    data[i * 24 + j] = values[j];
+  for (var j: u32 = 0; j < 12; j++) {
+    data[i * 12 + j] = values[j];
   }
 }
 
@@ -22,39 +22,20 @@ fn cellIndexToPosition(cellIndex: u32) -> vec2u {
   return vec2u(cellIndex % dimensions.x, cellIndex / dimensions.x);
 }
 
-fn generateCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<f32, 24> {
-  return flatten2Quads(array<array<vec2f, 6>, 2>(
-    topForCell(x, y, seed, thickness),
-    rightForCell(x, y, seed, thickness),
-  ));
-}
-
-fn topForCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<vec2f, 6> {
+fn generateCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<vec2f, 6> {
   if (x == dimensions.x - 1) {
+    return empty();
+  }
+
+  if (y == dimensions.y - 1) {
     return empty();
   }
 
   if (hashCell(x, y, seed) < 0.5) {
     return top(x, y, thickness);
-  }
-
-  return empty();
-}
-
-fn rightForCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<vec2f, 6> {
-  if (y == dimensions.y - 1) {
-    return empty();
-  }
-
-  if (hashCell(x, y, seed) >= 0.5) {
+  } else {
     return right(x, y, thickness);
   }
-
-  return empty();
-}
-
-fn randomForCell(x: u32, y: u32, seed: f32) -> f32 {
-  return f32((x * dimensions.x) + dimensions.y) * seed;
 }
 
 // A hash function to generate a pseudo-random value between 0 and 1

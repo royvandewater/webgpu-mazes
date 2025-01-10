@@ -24,3 +24,14 @@ fn flatten2Quads(quads: array<array<vec2f, 6>, 2>) -> array<f32, 24> {
 
   return flattened;
 }
+
+fn flattenQuad(quad: array<vec2f, 6>) -> array<f32, 12> {
+  var flattened: array<f32, 12> = array<f32, 12>();
+
+  for (var i: i32 = 0; i < 6; i++) {
+    flattened[(i * 2)] = quad[i].x;
+    flattened[(i * 2) + 1] = quad[i].y;
+  }
+
+  return flattened;
+}

@@ -13,7 +13,8 @@ import { registerPan } from "./registerPan.js";
 // we can't use fp16 because most browsers don't support Float16Array, which is necessary to be able
 // to write our data to the GPU. We could technically use a Float32Array, but that would require
 // a bunch of bit masking magic that I don't want to deal with.
-const maxSize = 134217728 / 96;
+// 96 comes from 8 * 2 * 6 * 1, I think. That's 8 bytes per vertex, 2 vertices per cell, 6 cells per quad, and 1 quad per cell.
+const maxSize = 134217728 / 48;
 // const maxSize = Infinity;
 
 const main = async () => {

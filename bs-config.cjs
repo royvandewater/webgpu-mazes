@@ -26,6 +26,7 @@ module.exports = {
   server: {
     baseDir: ".",
     index: "index.html",
+    https: true,
   },
   proxy: false,
   port: 3000,
@@ -69,15 +70,7 @@ module.exports = {
   localOnly: false,
   codeSync: true,
   timestamps: true,
-  clientEvents: [
-    "scroll",
-    "scroll:element",
-    "input:text",
-    "input:toggles",
-    "form:submit",
-    "form:reset",
-    "click",
-  ],
+  clientEvents: ["scroll", "scroll:element", "input:text", "input:toggles", "form:submit", "form:reset", "click"],
   socket: {
     socketIoOptions: {
       log: false,

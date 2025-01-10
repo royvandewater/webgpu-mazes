@@ -4,7 +4,8 @@ export const generateBinTreeMaze = async (device, width, height, seed, thickness
   const shaderPath = "src/shaders/generateBinTreeMaze.wgsl";
   const size = width * height;
 
-  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, size, seed, width, height, thickness);
+  const { resultBuffer: cellBuffer } = await compute(device, shaderPath, size, seed, width, height, thickness);
+  const borderBuffer = generateBorderBuffer(device, width, height, thickness);
 
   return { cellBuffer, borderBuffer, width, height };
 };
@@ -12,7 +13,8 @@ export const generateBinTreeMaze = async (device, width, height, seed, thickness
 export const generateHardcodedMaze = async (device) => {
   const shaderPath = "src/shaders/generateHardcodedMaze.wgsl";
 
-  const { cellBuffer, borderBuffer } = await compute(device, shaderPath, 9, 1, thickness);
+  const { resultBuffer: cellBuffer } = await compute(device, shaderPath, 9, 1, thickness);
+  const borderBuffer = generateBorderBuffer(device, width, height, thickness);
 
   return { cellBuffer, borderBuffer, width, height };
 };
@@ -32,8 +34,8 @@ export const compute = async (device, shaderPath, size, seed, width, height, thi
     },
   });
 
-  // size * 2 * 6 * 2 because we have 2 coordinates per vertex, 6 vertices per quad, and up to 2 quads per cell
-  const input = new Float32Array(size * 2 * 6 * 2).fill(seed);
+  // size * 2 * 6 * 2 because we have 2 coordinates per vertex, 6 vertices per quad, and up to 1 quads per cell
+  const input = new Float32Array(size * 2 * 6 * 1).fill(seed);
 
   const workBuffer = device.createBuffer({
     label: "work buffer",
@@ -85,9 +87,7 @@ export const compute = async (device, shaderPath, size, seed, width, height, thi
   device.queue.submit([commandBuffer]);
   await device.queue.onSubmittedWorkDone();
 
-  const borderBuffer = generateBorderBuffer(device, width, height, thickness);
-
-  return { cellBuffer: resultBuffer, borderBuffer };
+  return { resultBuffer };
 };
 
 const generateBorderBuffer = (device, width, height, thickness) => {
