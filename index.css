@@ -10,18 +10,7 @@ pre {
 }
 
 canvas {
- height: 100vh;
- touch-action: none;
-}
-
-pre {
-  background: #f0f0f0;
-  padding: 1rem;
-  overflow: scroll;
-  max-height: 100vh;
-  max-width: 100vw;
-}
-
-canvas {
+  height: 100vh;
   display: block;
+  touch-action: none; /* Needed for pinch zoom to work */
 }
