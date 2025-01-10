@@ -140,7 +140,7 @@ export const render = async (device, maze, options) => {
     const borderPass = encoder.beginRenderPass(borderRenderPassDescriptor);
     borderPass.setPipeline(borderPipeline);
     borderPass.setBindGroup(0, borderBindGroup);
-    borderPass.draw(10);
+    borderPass.draw(borderBuffer.size / Float32Array.BYTES_PER_ELEMENT);
     borderPass.end();
 
     device.queue.submit([encoder.finish()]);
