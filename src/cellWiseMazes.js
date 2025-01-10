@@ -1,5 +1,5 @@
 import { resolveShader } from "./resolveShader.js";
-
+import { borderTriangleStrip } from "./borderTriangleStrip.js";
 // collection of algorithms that generate mazes cell by cell
 
 export const generateBinTreeMaze = async (device, width, height, seed, thickness) => {
@@ -102,33 +102,7 @@ const generateBorderBuffer = (device, width, height, thickness) => {
     size: triangles.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   });
-  console.log("bytes per element", Float32Array.BYTES_PER_ELEMENT);
   device.queue.writeBuffer(buffer, 0, triangles);
 
   return buffer;
-};
-
-const borderTriangleStrip = (width, height, thickness) => {
-  const h = thickness / 2;
-
-  console.log({ width, height, thickness });
-
-  return [
-    [-0.5 + h + 1, -0.5 - h], // bottom left
-    [-0.5 + h + 1, -0.5 + h], // bottom left inner
-    [width - 0.5 + h, -0.5 - h], // bottom right
-    [width - 0.5 - h, -0.5 + h], // bottom right inner
-    [width - 0.5 + h, height - 0.5 - h - 1], // top right
-    [width - 0.5 - h, height - 0.5 - h - 1], // top right inner
-
-    [width - 0.5 - h - 1, height - 0.5 - h - 1], // break strip with invalid triangle
-    [width - 0.5 - h - 1, height - 0.5 - h - 1],
-
-    [width - 0.5 - h - 1, height - 0.5 + h], // top right
-    [width - 0.5 - h - 1, height - 0.5 - h], // top right inner
-    [-0.5 - h, height - 0.5 + h], // top left
-    [-0.5 + h, height - 0.5 - h], // top left inner
-    [-0.5 - h, -0.5 + h + 1], // bottom left
-    [-0.5 + h, -0.5 + h + 1], // bottom left inner
-  ];
 };
