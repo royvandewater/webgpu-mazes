@@ -10,10 +10,12 @@ export const generateBinTreeMaze = async (device, width, height, seed, thickness
   return { cellBuffer, borderBuffer, width, height };
 };
 
-export const generateHardcodedMaze = async (device) => {
+export const generateHardcodedMaze = async (device, thickness) => {
   const shaderPath = "src/shaders/generateHardcodedMaze.wgsl";
+  const width = 3;
+  const height = 3;
 
-  const { resultBuffer: cellBuffer } = await compute(device, shaderPath, 9, 1, thickness);
+  const { resultBuffer: cellBuffer } = await compute(device, shaderPath, 9, 1, width, height, thickness);
   const borderBuffer = generateBorderBuffer(device, width, height, thickness);
 
   return { cellBuffer, borderBuffer, width, height };
@@ -98,7 +100,7 @@ const generateBorderBuffer = (device, width, height, thickness) => {
     size: triangles.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   });
-  console.log('bytes per element', Float32Array.BYTES_PER_ELEMENT);
+  console.log("bytes per element", Float32Array.BYTES_PER_ELEMENT);
   device.queue.writeBuffer(buffer, 0, triangles);
 
   return buffer;
@@ -107,7 +109,7 @@ const generateBorderBuffer = (device, width, height, thickness) => {
 const borderTriangleStrip = (width, height, thickness) => {
   const h = thickness / 2;
 
-  console.log({width, height, thickness});
+  console.log({ width, height, thickness });
 
   return [
     [-0.5 + h + 1, -0.5 - h], // bottom left

@@ -1,144 +1,61 @@
 // @include "./mazeWalls.wgsl"
 // @include "./flattenQuads.wgsl"
 
+// ┌───┬───┬
+// │ 7   8   9    0,2 1,2 2,2
+// ├───┼   ┼   ┤
+// │ 4   5 │ 6 │  0,1 1,1 2,1
+// ├   ┼───┼   ┤
+//   0 │ 1   2 │  0,0 1,0 2,0
+//    ─┴───┴───┘
+// The outer border walls are taken care of somewhere else
+
 @group(0) @binding(0) var<storage, read_write> data: array<f32>;
+@group(0) @binding(1) var<uniform> dimensions: vec2u;
+@group(0) @binding(2) var<uniform> thickness: f32;
 
 @compute @workgroup_size(1) fn generate(
   @builtin(global_invocation_id) id: vec3u
 ) {
-  let i = id.x;
+  let i = id.x + (id.y * dimensions.x);
+  let values = flattenQuad(generateCell(id.x, id.y, thickness));
 
-  let values = getValues(i);
-
-  for (var j: i32 = 0; j < 48; j++) {
-    data[i32(i) * 48 + j] = values[j];
+  for (var j: u32 = 0; j < 12; j++) {
+    data[i * 12 + j] = values[j];
   }
 }
 
+fn coordToInt(x: u32, y: u32) -> u32 {
+  return x + (y * dimensions.x);
+}
 
-fn getValues(i: u32) -> array<f32, 48> {
-  switch (i) {
+fn generateCell(x: u32, y: u32, thickness: f32) -> array<vec2f, 6> {
+  // processing the maze from bottom left to top right
+  switch (coordToInt(x, y)) {
     case 0: {
-      return if0();
+      return right(x, y, thickness);
     }
     case 1: {
-      return if1();
+      return top(x, y, thickness);
     }
     case 2: {
-      return if2();
+      return empty();
     }
     case 3: {
-      return if3();
+      return top(x, y, thickness);
     }
     case 4: {
-      return if4();
+      return right(x, y, thickness);
     }
     case 5: {
-      return if5();
+      return empty();
     }
-    case 6: {
-      return if6();
-    }
-    case 7: {
-      return if7();
-    }
-    case 8: {
-      return if8();
+    case 6, 7, 8: {
+      return empty();
     }
     default: {
-      return array<f32, 48>();
+      return empty();
     }
   }
 }
 
-// we are the 0'th cell, we need to return 48 coordinates (2 coordinates per vertex, 6 vertices per quad, 4 quads per cell)
-// If any of the quads should not be drawn, we need to return -2.0 for each of the coordinates in those quads
-// if0 needs to return The top left cell, so top, bottom, and left walls
-fn if0() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    top(0.0, 2.0),
-    bottom(0.0, 2.0),
-    left(0.0, 2.0),
-    empty(),
-  ));
-}
-
-// if1 needs to return the top middle cell, so only top
-fn if1() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    top(1.0, 2.0),
-    empty(),
-    empty(),
-    empty(),
-  ));
-}
-
-// if2 needs to return the top right cell, so top and right
-fn if2() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    top(2.0, 2.0),
-    right(2.0, 2.0),
-    empty(),
-    empty(),
-  ));
-}
-
-// if3 needs to return the middle left cell, so top and left
-fn if3() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    top(0.0, 1.0),
-    left(0.0, 1.0),
-    empty(),
-    empty(),
-  ));
-}
-
-// if4 needs to return the middle middle cell, so right and bottom
-fn if4() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    bottom(1.0, 1.0),
-    right(1.0, 1.0),
-    empty(),
-    empty(),
-  ));
-}
-
-// if5 needs to return the middle right cell, so left and right
-fn if5() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    left(2.0, 1.0),
-    right(2.0, 1.0),
-    empty(),
-    empty(),
-  ));
-}
-
-// if6 needs to return the bottom left cell, so bottom, left, and right
-fn if6() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    bottom(0.0, 0.0),
-    left(0.0, 0.0),
-    right(0.0, 0.0),
-    empty(),
-  ));
-}
-
-// if7 needs to return the bottom middle cell, so bottom, left, and top
-fn if7() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    bottom(1.0, 0.0),
-    left(1.0, 0.0),
-    top(1.0, 0.0),
-    empty(),
-  ));
-}
-
-// if8 needs to return the bottom right cell, so bottom and right
-fn if8() -> array<f32, 48> {
-  return flattenQuads(array<array<vec2f, 6>, 4>(
-    bottom(2.0, 0.0),
-    right(2.0, 0.0),
-    empty(),
-    empty(),
-  ));
-}

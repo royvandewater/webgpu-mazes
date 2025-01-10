@@ -18,10 +18,6 @@
   }
 }
 
-fn cellIndexToPosition(cellIndex: u32) -> vec2u {
-  return vec2u(cellIndex % dimensions.x, cellIndex / dimensions.x);
-}
-
 fn generateCell(x: u32, y: u32, seed: f32, thickness: f32) -> array<vec2f, 6> {
   if (x == dimensions.x - 1) {
     return empty();

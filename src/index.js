@@ -1,12 +1,8 @@
 import { assert } from "./assert.js";
 import { render } from "./render.js";
-import {
-  generateBinTreeMaze as generateBinTreeMazeGPU,
-  generateHardcodedMaze as generateHardcodedMazeGPU,
-} from "./gpuMaze.js";
+import { generateBinTreeMaze, generateHardcodedMaze } from "./gpuMaze.js";
 import { registerPinchZoom } from "./registerPinchZoom.js";
 import { registerPan } from "./registerPan.js";
-
 
 const windowAspectRatio = () => {
   return window.innerWidth / window.innerHeight;
@@ -32,8 +28,18 @@ const main = async () => {
   const minBufferSize = 48 * size;
   const maxBufferSize = adapter.limits.maxBufferSize;
   const maxStorageBufferBindingSize = adapter.limits.maxStorageBufferBindingSize;
-  assert(maxBufferSize >= minBufferSize, new Error(`Max buffer size (${maxBufferSize}) is too small, need at least ${minBufferSize} for maze of current size`));
-  assert(maxStorageBufferBindingSize >= minBufferSize, new Error(`Max storage buffer binding size (${maxStorageBufferBindingSize}) is too small, need at least ${minBufferSize} for maze of current size`));
+  assert(
+    maxBufferSize >= minBufferSize,
+    new Error(
+      `Max buffer size (${maxBufferSize}) is too small, need at least ${minBufferSize} for maze of current size`
+    )
+  );
+  assert(
+    maxStorageBufferBindingSize >= minBufferSize,
+    new Error(
+      `Max storage buffer binding size (${maxStorageBufferBindingSize}) is too small, need at least ${minBufferSize} for maze of current size`
+    )
+  );
 
   const device = await adapter.requestDevice({
     requiredLimits: {
@@ -43,7 +49,8 @@ const main = async () => {
   });
   assert(device, new Error("Failed to get WebGPU device"));
 
-  const maze = await generateBinTreeMazeGPU(device, height, width, seed, thickness);
+  // const maze = await generateBinTreeMaze(device, height, width, seed, thickness);
+  const maze = await generateHardcodedMaze(device, thickness);
   const options = { zoom: 1, position: { x: 0, y: 0 } };
 
   await render(device, maze, options);
