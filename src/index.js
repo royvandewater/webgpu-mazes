@@ -42,10 +42,9 @@ const main = async () => {
   });
 
   registerPan(document.querySelector("canvas#maze"), ({ dx, dy }) => {
-    const scaleX = height * 0.0008;
-    const scaleY = width * 0.0015;
-    options.position.x += dx * scaleX;
-    options.position.y += dy * scaleY;
+    const scale = Math.sqrt(size) * 0.001;
+    options.position.x += dx * scale;
+    options.position.y += dy * scale;
   });
 };
 main();
