@@ -46,7 +46,7 @@ const registerMobilePinchZoom = (canvas, onZoom) => {
     if (Object.keys(evCache).length === 2) {
       const [pointer0, pointer1] = Object.values(evCache);
 
-      const curDiff = Math.abs(pointer0.clientX - pointer1.clientX);
+      const curDiff = Math.abs(pointer0.clientX - pointer1.clientX) + Math.abs(pointer0.clientY - pointer1.clientY);
 
       if (prevDiff > 0 && curDiff !== prevDiff) {
         onZoom(prevDiff - curDiff);
