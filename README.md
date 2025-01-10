@@ -16,3 +16,7 @@ bun dev
 
 - [ ] Add support for hexagon cells
 - [ ] Have pinch zoom be relative to the center of the pinch (currently it's relative to the center of the canvas)
+
+## Done
+
+- [x] Support larger buffers
