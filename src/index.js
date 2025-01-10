@@ -19,6 +19,7 @@ const main = async () => {
   const height = Number(params.get("height")) || Math.floor(width * windowAspectRatio());
   const thickness = Number(params.get("thickness")) || 0.5;
   const seed = Number(params.get("seed")) || Math.random() * Float32Array.MAX_VALUE;
+  const flip = params.get("flip") === "true" || false;
   const size = height * width;
 
   assert(window.navigator, new Error("WebGPU not supported in this browser"));
@@ -54,7 +55,7 @@ const main = async () => {
   const maze1 = await generateHardcodedMaze(device, thickness);
   const maze2 = await generateHardcodedMazeRowWise(device, thickness);
 
-  const options = { zoom: 1, position: { x: 0, y: 0 } };
+  const options = { zoom: 1, position: { x: 0, y: 0 }, flip };
 
   await render(device, maze, options);
 

@@ -58,6 +58,14 @@ export const render = async (device, maze, options) => {
   });
   device.queue.writeBuffer(cameraBuffer, 0, camera);
 
+  const flip = options.flip ? 1 : 0;
+  const flipBuffer = device.createBuffer({
+    label: "flip buffer",
+    size: Uint32Array.BYTES_PER_ELEMENT,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(flipBuffer, 0, Uint32Array.from([flip]));
+
   const cellBindGroup = device.createBindGroup({
     label: "cell bind group",
     layout: cellPipeline.getBindGroupLayout(0),
@@ -65,6 +73,7 @@ export const render = async (device, maze, options) => {
       { binding: 0, resource: { buffer: cellBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
       { binding: 2, resource: { buffer: cameraBuffer } },
+      { binding: 3, resource: { buffer: flipBuffer } },
     ],
   });
 
@@ -92,6 +101,7 @@ export const render = async (device, maze, options) => {
       { binding: 0, resource: { buffer: borderBuffer } },
       { binding: 1, resource: { buffer: dimensionsBuffer } },
       { binding: 2, resource: { buffer: cameraBuffer } },
+      { binding: 3, resource: { buffer: flipBuffer } },
     ],
   });
 

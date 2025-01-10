@@ -9,10 +9,13 @@
 // distance between the camera and the maze.
 @group(0) @binding(2) var<uniform> camera: vec3f;
 
+// flip is a boolean that indicates whether the maze should be flipped vertically
+@group(0) @binding(3) var<uniform> flip: u32; // 0 is false, 1 is true
+
 @vertex fn vertexShader(
   @builtin(vertex_index) vertexIndex: u32,
 ) -> @builtin(position) vec4f {
-  let vertex = scaleCoordinate(vertices[vertexIndex], minMaxValues, camera);
+  let vertex = scaleCoordinate(vertices[vertexIndex], minMaxValues, camera, flip);
 
   return vec4f(vertex, 0.0, 1.0);
 }
@@ -22,9 +25,14 @@
 }
 
 // moves the coordinate to a -1 to 1 range, adjust for the camera's position and zoom
-fn scaleCoordinate(coordinate: vec2f, minMaxValues: vec4f, camera: vec3f) -> vec2f {
-    // First normalize the coordinate to 0-1 range
-  let normalizedCoord = (coordinate - minMaxValues.xy) / (minMaxValues.zw - minMaxValues.xy);
+fn scaleCoordinate(coordinate: vec2f, minMaxValues: vec4f, camera: vec3f, flip: u32) -> vec2f {
+  var flipAmount = 1.0;
+  if (flip == 1) {
+    flipAmount = -1.0;
+  }
+
+  // First normalize the coordinate to 0-1 range
+  let normalizedCoord = ((coordinate - minMaxValues.xy) / (minMaxValues.zw - minMaxValues.xy)) * flipAmount;
   let normalizedCamera = (camera.xy - minMaxValues.xy) / (minMaxValues.zw - minMaxValues.xy);
 
   // Center the coordinate system (move 0,0 to center)
