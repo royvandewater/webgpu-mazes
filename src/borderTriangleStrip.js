@@ -26,3 +26,23 @@ export const borderTriangleStrip = (width, height, thickness) => {
     [-0.5 + h, -0.5 + h + 1], // bottom left inner
   ];
 };
+
+/**
+ * @param {GPUDevice} device
+ * @param {number} width
+ * @param {number} height
+ * @param {number} thickness
+ * @returns {GPUBuffer}
+ */
+export const generateBorderBuffer = (device, width, height, thickness) => {
+  const triangles = Float32Array.from(borderTriangleStrip(width, height, thickness).flat(2));
+
+  const buffer = device.createBuffer({
+    label: "border buffer",
+    size: triangles.byteLength,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(buffer, 0, triangles);
+
+  return buffer;
+};

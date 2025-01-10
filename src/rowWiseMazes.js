@@ -1,19 +1,10 @@
 import { resolveShader } from "./resolveShader.js";
 import { generateBorderBuffer } from "./borderTriangleStrip.js";
-// collection of algorithms that generate mazes cell by cell
 
-export const generateBinTreeMaze = async (device, width, height, seed, thickness) => {
-  const shaderPath = "src/shaders/generateBinTreeMaze.wgsl";
-  const size = width * height;
+// collection of algorithms that generate mazes row by row
 
-  const { resultBuffer: cellBuffer } = await compute(device, shaderPath, size, seed, width, height, thickness);
-  const borderBuffer = generateBorderBuffer(device, width, height, thickness);
-
-  return { cellBuffer, borderBuffer, width, height };
-};
-
-export const generateHardcodedMaze = async (device, thickness) => {
-  const shaderPath = "src/shaders/generateHardcodedMaze.wgsl";
+export const generateHardcodedMazeRowWise = async (device, thickness) => {
+  const shaderPath = "src/shaders/generateHardcodedMazeRowWise.wgsl";
   const width = 3;
   const height = 3;
 
@@ -83,7 +74,7 @@ export const compute = async (device, shaderPath, size, seed, width, height, thi
   const pass = encoder.beginComputePass({ label: "maze compute pass" });
   pass.setPipeline(pipeline);
   pass.setBindGroup(0, bindGroup);
-  pass.dispatchWorkgroups(width, height);
+  pass.dispatchWorkgroups(height);
   pass.end();
 
   encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);

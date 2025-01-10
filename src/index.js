@@ -3,6 +3,7 @@ import { render } from "./render.js";
 import { generateBinTreeMaze, generateHardcodedMaze } from "./cellWiseMazes.js";
 import { registerPinchZoom } from "./registerPinchZoom.js";
 import { registerPan } from "./registerPan.js";
+import { generateHardcodedMazeRowWise } from "./rowWiseMazes.js";
 
 const windowAspectRatio = () => {
   return window.innerWidth / window.innerHeight;
@@ -50,7 +51,9 @@ const main = async () => {
   assert(device, new Error("Failed to get WebGPU device"));
 
   const maze = await generateBinTreeMaze(device, height, width, seed, thickness);
-  // const maze = await generateHardcodedMaze(device, thickness);
+  const maze1 = await generateHardcodedMaze(device, thickness);
+  const maze2 = await generateHardcodedMazeRowWise(device, thickness);
+
   const options = { zoom: 1, position: { x: 0, y: 0 } };
 
   await render(device, maze, options);
