@@ -19,6 +19,7 @@ const registerDesktopPinchZoom = (canvas, onZoom) => {
 const registerMobilePinchZoom = (canvas, onZoom) => {
   const evCache = {};
   let prevDiff = -1;
+  const scale = 0.25;
 
   canvas.onpointerdown = pointerdownHandler;
   canvas.onpointermove = pointermoveHandler;
@@ -49,7 +50,7 @@ const registerMobilePinchZoom = (canvas, onZoom) => {
       const curDiff = Math.abs(pointer0.clientX - pointer1.clientX) + Math.abs(pointer0.clientY - pointer1.clientY);
 
       if (prevDiff > 0 && curDiff !== prevDiff) {
-        onZoom(prevDiff - curDiff);
+        onZoom(scale * (prevDiff - curDiff));
       }
 
       prevDiff = curDiff;
