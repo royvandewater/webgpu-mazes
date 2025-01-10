@@ -99,7 +99,7 @@ export const render = async (device, maze, options) => {
     label: "our basic canvas render pass",
     colorAttachments: [
       {
-        clearValue: [1.0, 1.0, 1.0, 1.0],
+        clearValue: [1.0, 1.0, 0.0, 1.0],
         loadOp: "clear",
         storeOp: "store",
       },
