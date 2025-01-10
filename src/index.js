@@ -1,6 +1,6 @@
 import { assert } from "./assert.js";
 import { render } from "./render.js";
-import { generateBinTreeMaze, generateHardcodedMaze } from "./gpuMaze.js";
+import { generateBinTreeMaze, generateHardcodedMaze } from "./cellWiseMazes.js";
 import { registerPinchZoom } from "./registerPinchZoom.js";
 import { registerPan } from "./registerPan.js";
 
@@ -49,8 +49,8 @@ const main = async () => {
   });
   assert(device, new Error("Failed to get WebGPU device"));
 
-  // const maze = await generateBinTreeMaze(device, height, width, seed, thickness);
-  const maze = await generateHardcodedMaze(device, thickness);
+  const maze = await generateBinTreeMaze(device, height, width, seed, thickness);
+  // const maze = await generateHardcodedMaze(device, thickness);
   const options = { zoom: 1, position: { x: 0, y: 0 } };
 
   await render(device, maze, options);

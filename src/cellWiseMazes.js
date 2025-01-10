@@ -1,5 +1,7 @@
 import { resolveShader } from "./resolveShader.js";
 
+// collection of algorithms that generate mazes cell by cell
+
 export const generateBinTreeMaze = async (device, width, height, seed, thickness) => {
   const shaderPath = "src/shaders/generateBinTreeMaze.wgsl";
   const size = width * height;
