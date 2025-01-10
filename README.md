@@ -9,7 +9,10 @@ bun install
 To run:
 
 ```bash
-bun run index.js
+bun dev
 ```
 
-This project was created using `bun init` in bun v1.1.30. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## TODO
+
+- [ ] Add support for hexagon cells
+- [ ] Have pinch zoom be relative to the center of the pinch (currently it's relative to the center of the canvas)
